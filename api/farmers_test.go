@@ -3,49 +3,46 @@ package api
 import (
 	"testing"
 	"github.com/DATA-DOG/go-sqlmock"
+	"net/http"
+	"net/http/httptest"
+	"github.com/stretchr/testify/assert"
+	"encoding/json"
 )
 
-func TestShouldAddFarmer(t *testing.T) {
+func TestShouldGetFarmers(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer db.Close()
 
-	farmerName := "girish"
-	farmerPhoneNumber := "9012343321"
+	app := &Api{db}
 
-	mock.ExpectBegin()
-	mock.ExpectExec("INSERT INTO farmers").WithArgs(farmerName, farmerPhoneNumber).WillReturnResult(sqlmock.NewResult(1,1))
-	mock.ExpectClose()
-
-	err = addFarmer(db, farmerName, farmerPhoneNumber)
+	req, _ := http.NewRequest("GET", "http://localhost/farmers", nil)
 	if err != nil {
-		t.Error("unable to add farmer to farmers table")
+		t.Fatalf("an error '%s' was not expected while creating request", err)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expections: %s", err)
+	mockFarmerData := Farmers{List:make([]Farmer,0)}
+	mockFarmerData.List = append(mockFarmerData.List, Farmer{Id:1, Name:"harish", District:"belgam", State:"Karnataka", PhoneNumber:8989829802})
+	mockFarmerData.List = append(mockFarmerData.List, Farmer{Id:2, Name:"palli", District:"kundapur", State:"Karnataka", PhoneNumber:9099009900})
+
+	w := httptest.NewRecorder()
+	rows := sqlmock.NewRows([]string{"id", "name", "district", "state", "phoneNumber"}).
+		AddRow(mockFarmerData.List[0].Id, mockFarmerData.List[0].Name, mockFarmerData.List[0].District, mockFarmerData.List[0].State, mockFarmerData.List[0].PhoneNumber).
+		AddRow(mockFarmerData.List[1].Id, mockFarmerData.List[1].Name, mockFarmerData.List[1].District, mockFarmerData.List[1].State, mockFarmerData.List[1].PhoneNumber)
+
+	mock.ExpectQuery("^SELECT (.+) FROM farmers$").WillReturnRows(rows)
+
+	// now we execute our request
+	app.ListFarmers(w, req)
+
+	if w.Code != 200 {
+		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
 	}
-}
 
+	farmers := Farmers{List:make([]Farmer,0)}
+	err = json.Unmarshal(w.Body.Bytes(), &farmers)
 
-func TestShouldNotAddFarmerIfInputIsNil(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	farmerPhoneNumber := "9012343321"
-
-	mock.ExpectBegin()
-	mock.ExpectExec("INSERT INTO farmers").WithArgs(nil, farmerPhoneNumber).WillReturnError(error("failed to add farmer"))
-	mock.ExpectClose()
-
-	err = addFarmer(db, nil, farmerPhoneNumber)
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expections: %s", err)
-	}
+	assert.Equal(t,mockFarmerData,farmers)
 }
