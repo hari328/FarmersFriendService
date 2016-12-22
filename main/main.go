@@ -41,8 +41,11 @@ func main() {
 
 	app := api.NewApi("./farmerApp.db")
 
-	farmersRoute := router.PathPrefix("/farmers")
-	farmersRoute.HandlerFunc(app.ListFarmers)
+	farmersRouteGet := router.PathPrefix("/farmers").Methods("GET")
+	farmersRouteGet.HandlerFunc(app.ListFarmers)
+
+	farmersRoutePost := router.PathPrefix("/farmers").Methods("POST")
+	farmersRoutePost.HandlerFunc(app.AddFarmer)
 
 	http.Handle("/", router)
 	http.ListenAndServe(":7000", nil)

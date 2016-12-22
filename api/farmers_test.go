@@ -10,11 +10,19 @@ import (
 )
 
 
+func dummyFarmerOne() Farmer {
+	return Farmer{Id:1, Name:"harish", District:"belgam", State:"Karnataka", PhoneNumber:8989829802}
+}
+
+func dummyFarmerTwo() Farmer {
+	return Farmer{Id:2, Name:"palli", District:"kundapur", State:"Karnataka", PhoneNumber:9099009900}
+}
+
 func getFarmers() Farmers {
 	mockFarmerData := Farmers{List:make([]Farmer,0)}
 
-	mockFarmerData.List = append(mockFarmerData.List, Farmer{Id:1, Name:"harish", District:"belgam", State:"Karnataka", PhoneNumber:8989829802})
-	mockFarmerData.List = append(mockFarmerData.List, Farmer{Id:2, Name:"palli", District:"kundapur", State:"Karnataka", PhoneNumber:9099009900})
+	mockFarmerData.List = append(mockFarmerData.List, dummyFarmerOne())
+	mockFarmerData.List = append(mockFarmerData.List, dummyFarmerTwo())
 	return mockFarmerData
 }
 
@@ -57,6 +65,37 @@ func TestShouldGetFarmers(t *testing.T) {
 	assert.Equal(t, mockData, responseData)
 }
 
-func TestShouldAddFarmer(t *testing.T) {
-
-}
+//func TestShouldAddFarmer(t *testing.T) {
+//	db, mock, err := sqlmock.New()
+//	if err != nil {
+//		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+//	}
+//	defer db.Close()
+//
+//	farmerData := dummyFarmerOne()
+//	mock.ExpectBegin()
+//	mock.ExpectPrepare("INSERT INTO farmers(.+) VALUES$").
+//		ExpectExec().
+//		WithArgs(farmerData.Name, farmerData.District, farmerData.State, farmerData.PhoneNumber).
+//		WillReturnResult(sqlmock.NewResult(1,1))
+//	mock.ExpectCommit()
+//
+//	farmerJson, err := json.Marshal(farmerData)
+//	fmt.Println(string(farmerJson))
+//	if err != nil {
+//		t.Fatalf("json marshall failed")
+//	}
+//	req, _ := http.NewRequest("POST", "http://localhost/farmers", bytes.NewBuffer([]byte(farmerJson)))
+//	w := httptest.NewRecorder()
+//
+//	app := &Api{db}
+//	app.AddFarmer(w, req)
+//
+//	if w.Code != 200 {
+//		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
+//	}
+//
+//	if err := mock.ExpectationsWereMet(); err != nil {
+//		t.Errorf("there were unfulfilled expections: %s", err)
+//	}
+//}

@@ -3,6 +3,8 @@ package api
 import (
 	"net/http"
 	"encoding/json"
+	"io/ioutil"
+	"fmt"
 )
 
 func (api *Api) ListFarmers(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +36,43 @@ func (api *Api) ListFarmers(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(farmerDetails))
 }
 
+func (api *Api) AddFarmer(w http.ResponseWriter, r *http.Request){
+
+	farmerJson, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(500)
+	}
+
+	var farmer Farmer
+	if err := json.Unmarshal(farmerJson, &farmer); err != nil {
+		w.WriteHeader(500)
+	}
+
+
+	stmt, err := api.Db.Prepare("INSERT INTO farmers(name, district, state, phoneNumber) VALUES (?, ?, ?, ?)")
+	if err != nil {
+		w.WriteHeader(500)
+	}
+
+	fmt.Println(farmer, err, stmt)
+	res, err := stmt.Exec(farmer.Name, &farmer.District, farmer.State, farmer.PhoneNumber)
+	if err != nil {
+		w.WriteHeader(500)
+	}
+
+	if err != nil {
+		panic(err)
+	}
+
+	w.WriteHeader(200)
+
+	_, err = res.LastInsertId()
+	if err != nil {
+		panic(err)
+	}
+
+
+}
 type Farmers struct {
 	List []Farmer 			`json:"farmers"`
 }
