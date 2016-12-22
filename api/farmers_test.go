@@ -51,9 +51,10 @@ func TestShouldGetFarmers(t *testing.T) {
 		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
 	}
 
-	farmers := Farmers{List:make([]Farmer,0)}
-	err = json.Unmarshal(w.Body.Bytes(), &farmers)
-	assert.Equal(t, mockData,farmers)
+
+	responseData := Farmers{List:make([]Farmer,0)}
+	err = json.Unmarshal(w.Body.Bytes(), &responseData)
+	assert.Equal(t, mockData, responseData)
 }
 
 func TestShouldAddFarmer(t *testing.T) {
