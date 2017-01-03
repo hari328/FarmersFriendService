@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"github.com/stretchr/testify/assert"
 	"encoding/json"
+	"fmt"
+	"bytes"
 )
 
 
@@ -65,37 +67,67 @@ func TestShouldGetFarmers(t *testing.T) {
 	assert.Equal(t, mockData, responseData)
 }
 
-//func TestShouldAddFarmer(t *testing.T) {
-//	db, mock, err := sqlmock.New()
-//	if err != nil {
-//		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-//	}
-//	defer db.Close()
-//
-//	farmerData := dummyFarmerOne()
-//	mock.ExpectBegin()
-//	mock.ExpectPrepare("INSERT INTO farmers(.+) VALUES$").
-//		ExpectExec().
-//		WithArgs(farmerData.Name, farmerData.District, farmerData.State, farmerData.PhoneNumber).
-//		WillReturnResult(sqlmock.NewResult(1,1))
-//	mock.ExpectCommit()
-//
-//	farmerJson, err := json.Marshal(farmerData)
-//	fmt.Println(string(farmerJson))
-//	if err != nil {
-//		t.Fatalf("json marshall failed")
-//	}
-//	req, _ := http.NewRequest("POST", "http://localhost/farmers", bytes.NewBuffer([]byte(farmerJson)))
-//	w := httptest.NewRecorder()
-//
-//	app := &Api{db}
-//	app.AddFarmer(w, req)
-//
-//	if w.Code != 200 {
-//		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
-//	}
-//
-//	if err := mock.ExpectationsWereMet(); err != nil {
-//		t.Errorf("there were unfulfilled expections: %s", err)
-//	}
-//}
+func TestShouldAddFarmer(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	farmerData := dummyFarmerOne()
+	mock.ExpectBegin()
+	mock.ExpectPrepare("INSERT INTO farmers(.+) VALUES$").ExpectExec().WithArgs(&farmerData.Name, &farmerData.District,
+	&farmerData.State, &farmerData.PhoneNumber).WillReturnResult(sqlmock.NewResult(1,1))
+	mock.ExpectCommit()
+
+	farmerJson, err := json.Marshal(farmerData)
+	fmt.Println(string(farmerJson))
+	if err != nil {
+		t.Fatalf("json marshall failed")
+	}
+	req, _ := http.NewRequest("POST", "http://localhost/farmers", bytes.NewBuffer([]byte(farmerJson)))
+	w := httptest.NewRecorder()
+
+	app := &Api{db}
+	app.AddFarmer(w, req)
+
+	if w.Code != 200 {
+		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expections: %s", err)
+	}
+}
+
+func TestShouldGetParticularFarmerDetails(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	farmerData := dummyFarmerOne()
+
+	rows := sqlmock.NewRows([]string{"id", "name", "district", "state", "phoneNumber"}).
+		AddRow(farmerData.Id, farmerData.Name, farmerData.District, farmerData.State, farmerData.PhoneNumber)
+	mock.ExpectQuery("^SELECT (.+) FROM farmers where farmerId = .$").WillReturnRows(rows)
+
+	req, _ := http.NewRequest("GET", "http://localhost/farmers/1", nil)
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected while creating request", err)
+	}
+	w := httptest.NewRecorder()
+
+	// now we execute our request
+	app := &Api{db}
+	app.GetFarmer(w, req)
+
+	if w.Code != 200 {
+		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
+	}
+
+
+	responseData := Farmer{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseData)
+	assert.Equal(t, farmerData, responseData)
+}
