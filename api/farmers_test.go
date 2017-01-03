@@ -126,7 +126,6 @@ func TestShouldGetParticularFarmerDetails(t *testing.T) {
 		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
 	}
 
-
 	responseData := Farmer{}
 	err = json.Unmarshal(w.Body.Bytes(), &responseData)
 	assert.Equal(t, farmerData, responseData)

@@ -75,11 +75,7 @@ func (api *Api) AddFarmer(w http.ResponseWriter, r *http.Request){
 func (api *Api) GetFarmer(w http.ResponseWriter, r *http.Request){
 	vars := mux.Vars(r)
 	id := vars["id"]
-	farmerId, err := strconv.Atoi(id)
-
-	if err != nil {
-		w.WriteHeader(400)
-	}
+	farmerId, _ := strconv.Atoi(id)
 
 	rows, err := api.Db.Query("SELECT * FROM farmers where farmerId = ?", farmerId)
 
