@@ -1,18 +1,48 @@
 #!/bin/sh
 
 goPath="/usr/local/Cellar/go"
-filename="goosee.go"
+filename="goose"
+isGlideInstalled="$(glide -v  >/dev/null 2>&1 || 'glide not installed')"
 
+#check if go in installed
+if [ ! -d ${goPath} ]; then
+    echo "go not found at ${goPath}"
+    exit 1
+fi
+
+#add goose to go path
 if [ -f ${goPath}/${filename} ]; then
     echo "file ${filename} found at at ${goPath}"
-    exit 0
+else
+    echo "copying ${filename} to ${goPath}"
+	cp ./setup/${filename} ${goPath}
+	echo "file copied successfully"
 fi
 
-echo "copying ${filename} to ${goPath}"
-if [ -d ${goPath} ]
+#install glide
+if [ ! -z "$isGlideInstalled" ]
 then
-	cp ./goosee.go ${goPath}
-	echo "file copied successfully"
+installStatus="$(curl https://glide.sh/get | sh > val)"
+echo "$installStatus"
 else
-    echo "go not found at ${goPath} "
+    echo "glide installed already"
 fi
+
+#remove previous dependencies for this service
+if [ -d ./vendor ]; then
+    rm -rf ./vendors
+    echo "removed vendor folder."
+fi
+
+#intall dependencies
+glide install
+
+echo ""
+
+numMigations="$(ls ./db/migrations | wc -l)"
+echo "number of migrations: ${numMigations}"
+
+
+goose -env=production -pgschema=farmerApp.db up
+goose -env=production -pgschema=farmerApp.db status
+
