@@ -1,0 +1,13 @@
+package: github.com/FarmersFriendService
+import:
+- package: github.com/gorilla/mux
+- package: github.com/mattn/go-sqlite3
+- package: github.com/pressly/goose
+  version: v1.0
+  subpackages:
+  - cmd/goose
+testImport:
+- package: github.com/DATA-DOG/go-sqlmock
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert
