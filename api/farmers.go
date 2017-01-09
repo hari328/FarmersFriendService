@@ -48,28 +48,31 @@ func (api *Api) AddFarmer(w http.ResponseWriter, r *http.Request){
 		w.WriteHeader(500)
 	}
 
-	stmt, err := api.Db.Prepare("INSERT INTO farmers(name, district, state, phoneNumber) VALUES (?, ?, ?, ?)")
+	transaction, err := api.Db.Begin()
+	defer func() {
+		switch err {
+		case nil:
+			err = transaction.Commit()
+		default:
+			transaction.Rollback()
+		}
+	}()
+
 	if err != nil {
 		w.WriteHeader(500)
 	}
 
-	res, err := stmt.Exec(farmer.Name, &farmer.District, farmer.State, farmer.PhoneNumber)
+	result, err := transaction.Exec("INSERT INTO farmers(name, district, state, phoneNumber) VALUES (?, ?, ?, ?)", farmer.Name, farmer.District, farmer.State, farmer.PhoneNumber)
+
 	if err != nil {
 		w.WriteHeader(500)
 	}
 
-	if err != nil {
-		panic(err)
+	if val, err := result.RowsAffected(); val != 1 || err != nil {
+		w.WriteHeader(500)
 	}
 
 	w.WriteHeader(200)
-
-	_, err = res.LastInsertId()
-	if err != nil {
-		panic(err)
-	}
-
-
 }
 
 func (api *Api) GetFarmer(w http.ResponseWriter, r *http.Request){

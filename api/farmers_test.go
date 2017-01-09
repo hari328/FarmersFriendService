@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"github.com/stretchr/testify/assert"
 	"encoding/json"
-	"fmt"
 	"bytes"
 )
 
@@ -61,7 +60,6 @@ func TestShouldGetFarmers(t *testing.T) {
 		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
 	}
 
-
 	responseData := Farmers{List:make([]Farmer,0)}
 	err = json.Unmarshal(w.Body.Bytes(), &responseData)
 	assert.Equal(t, mockData, responseData)
@@ -75,13 +73,12 @@ func TestShouldAddFarmer(t *testing.T) {
 	defer db.Close()
 
 	farmerData := dummyFarmerOne()
+
 	mock.ExpectBegin()
-	mock.ExpectPrepare("INSERT INTO farmers(.+) VALUES$").ExpectExec().WithArgs(&farmerData.Name, &farmerData.District,
-	&farmerData.State, &farmerData.PhoneNumber).WillReturnResult(sqlmock.NewResult(1,1))
+	mock.ExpectExec("INSERT INTO farmers").WithArgs(farmerData.Name, farmerData.District, farmerData.State, farmerData.PhoneNumber).WillReturnResult(sqlmock.NewResult(1,1))
 	mock.ExpectCommit()
 
 	farmerJson, err := json.Marshal(farmerData)
-	fmt.Println(string(farmerJson))
 	if err != nil {
 		t.Fatalf("json marshall failed")
 	}
@@ -110,7 +107,7 @@ func TestShouldGetParticularFarmerDetails(t *testing.T) {
 
 	rows := sqlmock.NewRows([]string{"id", "name", "district", "state", "phoneNumber"}).
 		AddRow(farmerData.Id, farmerData.Name, farmerData.District, farmerData.State, farmerData.PhoneNumber)
-	mock.ExpectQuery("^SELECT (.+) FROM farmers where farmerId = .$").WillReturnRows(rows)
+	mock.ExpectQuery("^SELECT (.+) FROM farmers where farmerId = \\?$").WillReturnRows(rows)
 
 	req, _ := http.NewRequest("GET", "http://localhost/farmers/1", nil)
 	if err != nil {
