@@ -6,14 +6,18 @@ import (
 	"io/ioutil"
 	"github.com/gorilla/mux"
 	"strconv"
+	"fmt"
 )
 
 func (api *Api) ListFarmers(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("here")
+
 	rows, err := api.Db.Query("SELECT * FROM farmers")
 	if err != nil {
 		panic(err)
 	}
 
+	fmt.Println("here")
 	farmers := &Farmers{List: make([]Farmer, 0)}
 
 	var farmer Farmer
@@ -101,7 +105,6 @@ func (api *Api) GetFarmer(w http.ResponseWriter, r *http.Request){
 
 	w.Write([]byte(farmerDetails))
 }
-
 
 type Farmers struct {
 	List []Farmer 			`json:"farmers"`

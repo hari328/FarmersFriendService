@@ -15,6 +15,8 @@ func main() {
 	router.HandleFunc("/farmers", app.ListFarmers)
 	router.HandleFunc("/farmers/{id:[0-9]+}",app.GetFarmer)
 
+	router.HandleFunc("/problems", app.ListProblems)
+
 	farmersRoutePost := router.PathPrefix("/farmers").Methods("POST")
 	farmersRoutePost.HandlerFunc(app.AddFarmer)
 
