@@ -6,21 +6,19 @@ import (
 	"io/ioutil"
 	"github.com/gorilla/mux"
 	"strconv"
-	"fmt"
+	"github.com/FarmersFriendService/model"
 )
 
-func (api *Api) ListFarmers(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("here")
 
+func (api *Api) ListFarmers(w http.ResponseWriter, r *http.Request) {
 	rows, err := api.Db.Query("SELECT * FROM farmers")
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("here")
-	farmers := &Farmers{List: make([]Farmer, 0)}
+	farmers := &Farmers{List: make([]model.Farmer, 0)}
 
-	var farmer Farmer
+	var farmer model.Farmer
 	for rows.Next() {
 		err = rows.Scan(&farmer.Id, &farmer.Name, &farmer.District, &farmer.State, &farmer.PhoneNumber)
 		if err != nil {
@@ -47,7 +45,7 @@ func (api *Api) AddFarmer(w http.ResponseWriter, r *http.Request){
 		w.WriteHeader(500)
 	}
 
-	var farmer Farmer
+	var farmer model.Farmer
 	if err := json.Unmarshal(farmerJson, &farmer); err != nil {
 		w.WriteHeader(500)
 	}
@@ -89,7 +87,7 @@ func (api *Api) GetFarmer(w http.ResponseWriter, r *http.Request){
 	if err != nil {
 		panic(err)
 	}
-	var farmer Farmer
+	var farmer model.Farmer
 
 	for rows.Next() {
 		err = rows.Scan(&farmer.Id, &farmer.Name, &farmer.District, &farmer.State, &farmer.PhoneNumber)
@@ -107,13 +105,5 @@ func (api *Api) GetFarmer(w http.ResponseWriter, r *http.Request){
 }
 
 type Farmers struct {
-	List []Farmer 			`json:"farmers"`
-}
-
-type Farmer struct {
-	Id int								`json:"farmerId"`
-	Name string						`json:"name"`
-	District string				`json:"district"`
-	State string					`json:"state"`
-	PhoneNumber int64			`json:"phoneNumber"`
+	List []model.Farmer 			`json:"farmers"`
 }

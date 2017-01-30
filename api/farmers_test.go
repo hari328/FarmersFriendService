@@ -8,19 +8,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"encoding/json"
 	"bytes"
+	"github.com/FarmersFriendService/model"
 )
 
 
-func dummyFarmerOne() Farmer {
-	return Farmer{Id:1, Name:"harish", District:"belgam", State:"Karnataka", PhoneNumber:8989829802}
+func dummyFarmerOne() model.Farmer {
+	return model.Farmer{Id:1, Name:"harish", District:"belgam", State:"Karnataka", PhoneNumber:8989829802}
 }
 
-func dummyFarmerTwo() Farmer {
-	return Farmer{Id:2, Name:"palli", District:"kundapur", State:"Karnataka", PhoneNumber:9099009900}
+func dummyFarmerTwo() model.Farmer {
+	return model.Farmer{Id:2, Name:"palli", District:"kundapur", State:"Karnataka", PhoneNumber:9099009900}
 }
 
 func getFarmers() Farmers {
-	mockFarmerData := Farmers{List:make([]Farmer,0)}
+	mockFarmerData := Farmers{List:make([]model.Farmer, 0)}
 
 	mockFarmerData.List = append(mockFarmerData.List, dummyFarmerOne())
 	mockFarmerData.List = append(mockFarmerData.List, dummyFarmerTwo())
@@ -60,7 +61,7 @@ func TestShouldGetFarmers(t *testing.T) {
 		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
 	}
 
-	responseData := Farmers{List:make([]Farmer,0)}
+	responseData := Farmers{List:make([]model.Farmer,0)}
 	err = json.Unmarshal(w.Body.Bytes(), &responseData)
 	assert.Equal(t, mockData, responseData)
 }
@@ -123,7 +124,8 @@ func TestShouldGetParticularFarmerDetails(t *testing.T) {
 		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
 	}
 
-	responseData := Farmer{}
+	responseData := model.Farmer{}
+
 	err = json.Unmarshal(w.Body.Bytes(), &responseData)
 	assert.Equal(t, farmerData, responseData)
 }
