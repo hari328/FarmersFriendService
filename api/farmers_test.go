@@ -7,10 +7,10 @@ import (
 	"net/http/httptest"
 	"github.com/stretchr/testify/assert"
 	"encoding/json"
-	"bytes"
 	"github.com/FarmersFriendService/model"
+	"github.com/gorilla/mux"
+	"bytes"
 )
-
 
 func dummyFarmerOne() model.Farmer {
 	return model.Farmer{Id:1, Name:"harish", District:"belgam", State:"Karnataka", PhoneNumber:8989829802}
@@ -37,11 +37,14 @@ func mockDbResponse(farmers Farmers) sqlmock.Rows{
 
 
 func TestShouldGetFarmers(t *testing.T) {
+	router := mux.NewRouter()
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer db.Close()
+
+	router.HandleFunc("/farmers", ListFarmers(db)).Methods("GET")
 
 	mockData := getFarmers()
 	rows := mockDbResponse(mockData)
@@ -53,9 +56,7 @@ func TestShouldGetFarmers(t *testing.T) {
 	}
 	w := httptest.NewRecorder()
 
-	// now we execute our request
-	app := &Api{db}
-	app.ListFarmers(w, req)
+	router.ServeHTTP(w,req)
 
 	if w.Code != 200 {
 		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
@@ -67,11 +68,14 @@ func TestShouldGetFarmers(t *testing.T) {
 }
 
 func TestShouldAddFarmer(t *testing.T) {
+	router := mux.NewRouter()
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer db.Close()
+
+	router.HandleFunc("/farmers", AddFarmer(db)).Methods("POST")
 
 	farmerData := dummyFarmerOne()
 
@@ -86,8 +90,7 @@ func TestShouldAddFarmer(t *testing.T) {
 	req, _ := http.NewRequest("POST", "http://localhost/farmers", bytes.NewBuffer([]byte(farmerJson)))
 	w := httptest.NewRecorder()
 
-	app := &Api{db}
-	app.AddFarmer(w, req)
+	router.ServeHTTP(w, req)
 
 	if w.Code != 200 {
 		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
@@ -99,16 +102,21 @@ func TestShouldAddFarmer(t *testing.T) {
 }
 
 func TestShouldGetParticularFarmerDetails(t *testing.T) {
+	router := mux.NewRouter()
 	db, mock, err := sqlmock.New()
+
+	router.HandleFunc("/farmers/{id:[0-9]+}", GetFarmer(db)).Methods("GET")
+
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
 	farmerData := dummyFarmerOne()
 
 	rows := sqlmock.NewRows([]string{"id", "name", "district", "state", "phoneNumber"}).
 		AddRow(farmerData.Id, farmerData.Name, farmerData.District, farmerData.State, farmerData.PhoneNumber)
-	mock.ExpectQuery("^SELECT (.+) FROM farmers where farmerId = \\?$").WillReturnRows(rows)
+	mock.ExpectQuery("^SELECT (.+) FROM farmers where farmerId = \\?$").WithArgs(1).WillReturnRows(rows)
 
 	req, _ := http.NewRequest("GET", "http://localhost/farmers/1", nil)
 	if err != nil {
@@ -116,9 +124,7 @@ func TestShouldGetParticularFarmerDetails(t *testing.T) {
 	}
 	w := httptest.NewRecorder()
 
-	// now we execute our request
-	app := &Api{db}
-	app.GetFarmer(w, req)
+	router.ServeHTTP(w, req)
 
 	if w.Code != 200 {
 		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
