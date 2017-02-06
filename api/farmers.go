@@ -21,7 +21,7 @@ func ListFarmers(db *sql.DB) http.HandlerFunc {
 
 		var farmer model.Farmer
 		for rows.Next() {
-			err = rows.Scan(&farmer.Id, &farmer.Name, &farmer.District, &farmer.State, &farmer.PhoneNumber)
+			err = rows.Scan(&farmer.Id, &farmer.Name, &farmer.District, &farmer.State, &farmer.PhoneNumber, &farmer.IsDeleted)
 			if err != nil {
 				panic(err)
 			}
@@ -68,7 +68,7 @@ func AddFarmer(db *sql.DB) http.HandlerFunc {
 			res.WriteHeader(500)
 		}
 
-		result, err := transaction.Exec("INSERT INTO farmers(name, district, state, phoneNumber) VALUES (?, ?, ?, ?)", farmer.Name, farmer.District, farmer.State, farmer.PhoneNumber)
+		result, err := transaction.Exec("INSERT INTO farmers(name, district, state, phoneNumber, isDeleted) VALUES (?, ?, ?, ?, ?)", farmer.Name, farmer.District, farmer.State, farmer.PhoneNumber, farmer.IsDeleted)
 
 		if err != nil {
 			res.WriteHeader(500)
@@ -82,7 +82,7 @@ func AddFarmer(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func  GetFarmer(db *sql.DB) http.HandlerFunc {
+func GetFarmer(db *sql.DB) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		id := vars["id"]
@@ -96,7 +96,7 @@ func  GetFarmer(db *sql.DB) http.HandlerFunc {
 		var farmer model.Farmer
 
 		for rows.Next() {
-			err = rows.Scan(&farmer.Id, &farmer.Name, &farmer.District, &farmer.State, &farmer.PhoneNumber)
+			err = rows.Scan(&farmer.Id, &farmer.Name, &farmer.District, &farmer.State, &farmer.PhoneNumber, &farmer.IsDeleted)
 			if err != nil {
 				panic(err)
 			}
@@ -110,6 +110,36 @@ func  GetFarmer(db *sql.DB) http.HandlerFunc {
 		res.Write([]byte(farmerDetails))
 	}
 }
+
+//func RemoveFarmer(db *sql.DB) http.HandlerFunc {
+//	return func(res http.ResponseWriter, req *http.Request) {
+//		vars := mux.Vars(req)
+//		id := vars["id"]
+//		farmerId, _ := strconv.Atoi(id)
+//
+//		rows, err := db.Query("SELECT * FROM farmers where farmerId = ?", farmerId)
+//
+//		if err != nil {
+//			panic(err)
+//		}
+//		var farmer model.Farmer
+//
+//		for rows.Next() {
+//			err = rows.Scan(&farmer.Id, &farmer.Name, &farmer.District, &farmer.State, &farmer.PhoneNumber)
+//			if err != nil {
+//				panic(err)
+//			}
+//		}
+//
+//		farmerDetails, err := json.Marshal(farmer)
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		res.Write([]byte(farmerDetails))
+//	}
+//}
+
 type Farmers struct {
 	List []model.Farmer 			`json:"farmers"`
 }

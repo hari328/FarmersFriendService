@@ -6,4 +6,5 @@ type Farmer struct {
 	District string				`json:"district"`
 	State string					`json:"state"`
 	PhoneNumber int64			`json:"phoneNumber"`
+	IsDeleted int					`json:"isDeleted"`
 }
