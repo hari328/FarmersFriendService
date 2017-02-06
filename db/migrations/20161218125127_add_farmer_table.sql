@@ -6,7 +6,8 @@ CREATE TABLE farmers (
     name VARCHAR(50),
     district VARCHAR(100),
     state VARCHAR(30),
-    phoneNumber VARCHAR(10));
+    phoneNumber VARCHAR(10),
+    isDeleted INTEGER);
 
 -- +goose Down
 -- SQL section 'Down' is executed when this migration is rolled back

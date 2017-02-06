@@ -1,8 +1,8 @@
 
 -- +goose Up
 -- SQL in section 'Up' is executed when this migration is applied
-INSERT INTO farmers VALUES(1, "Harish", "belgam", "karnataka", 9091090091);
-INSERT INTO farmers VALUES(2, "girish", "raichur", "karnataka", 9091093423);
+INSERT INTO farmers VALUES(1, "Harish", "belgam", "karnataka", 9091090091, 0);
+INSERT INTO farmers VALUES(2, "girish", "raichur", "karnataka", 9091093423, 0);
 
 -- +goose Down
 -- SQL section 'Down' is executed when this migration is rolled back

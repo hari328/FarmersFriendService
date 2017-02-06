@@ -5,6 +5,7 @@ CREATE TABLE solved (
     sovledId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     friendId INTEGER,
     sovledDate DATE,
+    isDeleted INTEGER,
     FOREIGN KEY(friendId) REFERENCES friends(friendId));
 
 -- +goose Down

@@ -7,6 +7,7 @@ CREATE TABLE problems (
     problemDesc VARCHAR(500),
     postedDate DATE,
     isSolved INTEGER,
+    isDeleted INTEGER,
     FOREIGN KEY(farmerId) REFERENCES farmers(farmerId));
 
 -- +goose Down
