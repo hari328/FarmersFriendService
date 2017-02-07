@@ -10,21 +10,12 @@ import (
 
 func main() {
 	router := mux.NewRouter()
-
 	db := initDb("./farmerApp.db")
-	listFarmersHandler := api.ListFarmers(db)
-	addFarmersHandler := api.AddFarmer(db)
-	getFarmersHandler := api.GetFarmer(db)
-	deleteFarmerHandler := api.DeleteFarmer(db)
 
-
-	router.HandleFunc("/farmers", listFarmersHandler).Methods("GET")
-	router.HandleFunc("/farmers/{id:[0-9]+}", getFarmersHandler).Methods("GET")
-	router.HandleFunc("/farmers", addFarmersHandler).Methods("POST")
-	router.HandleFunc("/farmers/{id:[0-9]+}", deleteFarmerHandler).Methods("PATCH")
+	registerFarmerRoutes(db, router)
 
 	http.Handle("/", router)
-	http.ListenAndServe(":7000", nil)
+	http.ListenAndServe(":9000", nil)
 }
 
 func initDb(dbName string) *sql.DB{
@@ -32,4 +23,18 @@ func initDb(dbName string) *sql.DB{
 	if err != nil { panic(err) }
 	if db == nil { panic("db nil") }
 	return db
+}
+
+func registerFarmerRoutes(db *sql.DB, rootRouter *mux.Router ) {
+	farmersRouter := rootRouter.PathPrefix("/farmers").Subrouter()
+
+	listFarmersHandler := api.ListFarmers(db)
+	addFarmersHandler := api.AddFarmer(db)
+	getFarmersHandler := api.GetFarmer(db)
+	deleteFarmerHandler := api.DeleteFarmer(db)
+
+	farmersRouter.HandleFunc("/", listFarmersHandler).Methods("GET")
+	farmersRouter.HandleFunc("/{id:[0-9]+}", getFarmersHandler).Methods("GET")
+	farmersRouter.HandleFunc("/", addFarmersHandler).Methods("POST")
+	farmersRouter.HandleFunc("/{id:[0-9]+}", deleteFarmerHandler).Methods("PATCH")
 }
