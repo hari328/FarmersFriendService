@@ -12,7 +12,7 @@ import (
 
 func ListFarmers(db *sql.DB) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		rows, err := db.Query("SELECT * FROM farmers")
+		rows, err := db.Query("SELECT * FROM farmers WHERE isDeleted = 0")
 		if err != nil {
 			panic(err)
 		}
@@ -41,7 +41,6 @@ func ListFarmers(db *sql.DB) http.HandlerFunc {
 }
 
 func AddFarmer(db *sql.DB) http.HandlerFunc {
-
 	return func(res http.ResponseWriter, req *http.Request) {
 
 		farmerJson, err := ioutil.ReadAll(req.Body)
@@ -68,7 +67,9 @@ func AddFarmer(db *sql.DB) http.HandlerFunc {
 			res.WriteHeader(500)
 		}
 
-		result, err := transaction.Exec("INSERT INTO farmers(name, district, state, phoneNumber, isDeleted) VALUES (?, ?, ?, ?, ?)", farmer.Name, farmer.District, farmer.State, farmer.PhoneNumber, farmer.IsDeleted)
+		isDeleted := 0
+
+		result, err := transaction.Exec("INSERT INTO farmers(name, district, state, phoneNumber, isDeleted) VALUES (?, ?, ?, ?, ?)", farmer.Name, farmer.District, farmer.State, farmer.PhoneNumber, isDeleted)
 
 		if err != nil {
 			res.WriteHeader(500)

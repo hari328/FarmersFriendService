@@ -49,7 +49,7 @@ func TestShouldGetFarmers(t *testing.T) {
 
 	mockData := getFarmers()
 	rows := mockDbResponse(mockData)
-	mock.ExpectQuery("^SELECT (.+) FROM farmers$").WillReturnRows(rows)
+	mock.ExpectQuery("^SELECT (.+) FROM farmers WHERE isDeleted = 0$").WillReturnRows(rows)
 
 	req, _ := http.NewRequest("GET", "http://localhost/farmers", nil)
 	if err != nil {
