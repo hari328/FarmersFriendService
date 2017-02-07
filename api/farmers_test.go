@@ -136,35 +136,37 @@ func TestShouldGetParticularFarmerDetails(t *testing.T) {
 	err = json.Unmarshal(w.Body.Bytes(), &responseData)
 	assert.Equal(t, farmerData, responseData)
 }
-//
-//func TestShouldDeleteParticularFarmerDetails(t *testing.T) {
-//	router := mux.NewRouter()
-//	db, mock, err := sqlmock.New()
-//
-//	router.HandleFunc("/farmers/{id:[0-9]+}", DeleteFarmer(db)).Methods("DELETE")
-//
-//	if err != nil {
-//		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-//	}
-//
-//	defer db.Close()
-//
-//	mock.ExpectBegin()
-//	mock.ExpectExec("^DELETE from farmers WHERE farmerId = \\?$").WithArgs(1).WillReturnResult(sqlmock.NewResult(0,1))
-//	mock.ExpectCommit()
-//
-//
-//	req, _ := http.NewRequest("DELETE", "http://localhost/farmers/1", nil)
-//	if err != nil {
-//		t.Fatalf("an error '%s' was not expected while creating request", err)
-//	}
-//	w := httptest.NewRecorder()
-//
-//	router.ServeHTTP(w, req)
-//
-//	if w.Code != 200 {
-//		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
-//	}
-//
-//	assert.True(t, mock.ExpectationsWereMet())
-//}
+
+func TestShouldDeleteParticularFarmerDetails(t *testing.T) {
+	router := mux.NewRouter()
+	db, mock, err := sqlmock.New()
+
+	router.HandleFunc("/farmers/{id:[0-9]+}", DeleteFarmer(db)).Methods("PATCH")
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+
+	defer db.Close()
+
+	mock.ExpectBegin()
+	mock.ExpectExec("^UPDATE farmers SET isDeleted = 1 WHERE farmerId = \\?$").WithArgs(1).WillReturnResult(sqlmock.NewResult(0,1))
+	mock.ExpectCommit()
+
+
+	req, _ := http.NewRequest("PATCH", "http://localhost/farmers/1", nil)
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected while creating request", err)
+	}
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != 200 {
+		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expections: %s", err)
+	}
+}

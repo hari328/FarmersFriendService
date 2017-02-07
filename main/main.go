@@ -10,22 +10,18 @@ import (
 
 func main() {
 	router := mux.NewRouter()
+
 	db := initDb("./farmerApp.db")
-
 	listFarmersHandler := api.ListFarmers(db)
-	testHandler := test()
+	addFarmersHandler := api.AddFarmer(db)
+	getFarmersHandler := api.GetFarmer(db)
+	deleteFarmerHandler := api.DeleteFarmer(db)
 
-	testRouter := router.Host("test").Subrouter()
 
-	testRouter.HandleFunc("/test/", testHandler).Methods("GET")
 	router.HandleFunc("/farmers", listFarmersHandler).Methods("GET")
-	//router.HandleFunc("/farmers/{id:[0-9]+}",app.GetFarmer)
-	//
-	//router.HandleFunc("/problems", app.ListProblems)
-	//
-	//farmersRoutePost := router.PathPrefix("/farmers").Methods("POST")
-	//farmersRoutePost.HandlerFunc(app.AddFarmer)
-
+	router.HandleFunc("/farmers/{id:[0-9]+}", getFarmersHandler).Methods("GET")
+	router.HandleFunc("/farmers", addFarmersHandler).Methods("POST")
+	router.HandleFunc("/farmers/{id:[0-9]+}", deleteFarmerHandler).Methods("PATCH")
 
 	http.Handle("/", router)
 	http.ListenAndServe(":7000", nil)
@@ -36,10 +32,4 @@ func initDb(dbName string) *sql.DB{
 	if err != nil { panic(err) }
 	if db == nil { panic("db nil") }
 	return db
-}
-
-func test() http.HandlerFunc {
-	return func (res http.ResponseWriter, req *http.Request) {
-		res.Write([]byte("hey there"))
-	}
 }
