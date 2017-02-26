@@ -64,15 +64,15 @@ func TestShouldAddFarmerToDb(t *testing.T) {
 	
 	setUpMockForAddFarmer(util.DummyFarmerOne(), mock)
 	
-	farmerJson, _:= json.Marshal(util.DummyFarmerOne())
+	farmerJson, _ := json.Marshal(util.DummyFarmerOne())
 	farmerService := New(db)
 	isAdded, er := farmerService.AddFarmer(farmerJson)
 	
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expections: %s", err)
 	}
-	assert.Equal(t,true, isAdded)
-	assert.Equal(t ,"", er)
+	assert.Equal(t, true, isAdded)
+	assert.Equal(t, "", er)
 }
 
 func TestShouldNotAddFarmerOnInvalidInput(t *testing.T) {
@@ -86,7 +86,7 @@ func TestShouldNotAddFarmerOnInvalidInput(t *testing.T) {
 	farmerService := New(db)
 	isAdded, er := farmerService.AddFarmer(farmerJson)
 	
-	assert.Equal(t,false, isAdded)
+	assert.Equal(t, false, isAdded)
 	assert.NotEmpty(t, er)
 }
 
@@ -139,11 +139,86 @@ func TestShouldGetErrorIfDbErrorOutForGetFarmer(t *testing.T) {
 	assert.Equal(t, "unable to retrive Farmers data from db: db error", er)
 }
 
+func TestShouldDeleteFarmerFromDb(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	
+	setUpMockForDeleteFarmerSuccess(mock)
+	
+	farmerService := New(db)
+	err = farmerService.DeleteFarmer(1)
+	
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expections: %s", err)
+	}
+	assert.Nil(t, err)
+}
+
+func TestShouldNotDeleteFarmerIfNotFoundInDb(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	
+	setupMockForDeleteFarmerNotFoundInDb(mock)
+	
+	farmerService := New(db)
+	er := farmerService.DeleteFarmer(1)
+	
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expections: %s", err)
+	}
+	assert.Equal(t, "unable to find record", er.Error())
+}
+
+func TestShouldNotDeleteFarmerOnDbError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	
+	setupMockForDeleteFarmerDbFailure(mock)
+	
+	farmerService := New(db)
+	er := farmerService.DeleteFarmer(1)
+	
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expections: %s", err)
+	}
+	assert.Equal(t, "db failure", er.Error())
+}
+
+func setupMockForDeleteFarmerDbFailure(mock sqlmock.Sqlmock) {
+	mock.ExpectBegin()
+	mock.ExpectExec("^UPDATE farmers SET isDeleted = 1 WHERE farmerId = \\?$").
+		WithArgs(1).WillReturnError(fmt.Errorf("db failure"))
+	mock.ExpectCommit()
+}
+
+func setupMockForDeleteFarmerNotFoundInDb(mock sqlmock.Sqlmock) {
+	mock.ExpectBegin()
+	mock.ExpectExec("^UPDATE farmers SET isDeleted = 1 WHERE farmerId = \\?$").
+		WithArgs(1).WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectCommit()
+}
+
+func setUpMockForDeleteFarmerSuccess(mock sqlmock.Sqlmock) {
+	mock.ExpectBegin()
+	mock.ExpectExec("^UPDATE farmers SET isDeleted = 1 WHERE farmerId = \\?$").
+		WithArgs(1).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+}
+
 func setUpMockForGetFarmer(mock sqlmock.Sqlmock, farmer model.Farmer) {
-		rows := sqlmock.NewRows([]string{"id", "name", "district", "state", "phoneNumber", "isDeleted"}).
-			AddRow(farmer.Id, farmer.Name, farmer.District, farmer.State, farmer.PhoneNumber, farmer.IsDeleted)
-		mock.ExpectQuery("^SELECT (.+) FROM farmers where farmerId = \\?$").WithArgs(1).
-			WillReturnRows(rows)
+	rows := sqlmock.NewRows([]string{"id", "name", "district", "state", "phoneNumber", "isDeleted"}).
+		AddRow(farmer.Id, farmer.Name, farmer.District, farmer.State, farmer.PhoneNumber, farmer.IsDeleted)
+	mock.ExpectQuery("^SELECT (.+) FROM farmers where farmerId = \\?$").WithArgs(1).
+		WillReturnRows(rows)
 }
 
 func setUpMockForListFarmers(mock sqlmock.Sqlmock, farmers []model.Farmer) {
@@ -151,15 +226,15 @@ func setUpMockForListFarmers(mock sqlmock.Sqlmock, farmers []model.Farmer) {
 		WillReturnRows(mockDbResponse(farmers))
 }
 
-func setUpMockForAddFarmer(farmer model.Farmer, mock sqlmock.Sqlmock ) {
+func setUpMockForAddFarmer(farmer model.Farmer, mock sqlmock.Sqlmock) {
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO farmers").
 		WithArgs(farmer.Name, farmer.District, farmer.State, farmer.PhoneNumber, farmer.IsDeleted).
-		WillReturnResult(sqlmock.NewResult(1,1))
+		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 }
 
-func mockDbResponse(farmers []model.Farmer) sqlmock.Rows{
+func mockDbResponse(farmers []model.Farmer) sqlmock.Rows {
 	if len(farmers) == 0 {
 		return sqlmock.NewRows([]string{"id", "name", "district", "state", "phoneNumber", "isDeleted"})
 	}
@@ -170,71 +245,33 @@ func mockDbResponse(farmers []model.Farmer) sqlmock.Rows{
 	return rows
 }
 
-////func TestShouldGetParticularFarmerDetails(t *testing.T) {
-////	router := mux.NewRouter()
-////	db, mock, err := sqlmock.New()
-////
-////	router.HandleFunc("/farmers/{id:[0-9]+}", GetFarmer(db)).Methods("GET")
-////
-////	if err != nil {
-////		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-////	}
-////
-////	defer db.Close()
-////	farmerData := dummyFarmerOne()
-////
-////	rows := sqlmock.NewRows([]string{"id", "name", "district", "state", "phoneNumber", "isDeleted"}).
-////		AddRow(farmerData.Id, farmerData.Name, farmerData.District, farmerData.State, farmerData.PhoneNumber, farmerData.IsDeleted)
-////	mock.ExpectQuery("^SELECT (.+) FROM farmers where farmerId = \\?$").WithArgs(1).WillReturnRows(rows)
-////
-////	req, _ := http.NewRequest("GET", "http://localhost/farmers/1", nil)
-////	if err != nil {
-////		t.Fatalf("an error '%s' was not expected while creating request", err)
-////	}
-////	w := httptest.NewRecorder()
-////
-////	router.ServeHTTP(w, req)
-////
-////	if w.Code != 200 {
-////		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
-////	}
-////
-////	responseData := service.Farmer{}
-////
-////	err = json.Unmarshal(w.Body.Bytes(), &responseData)
-////	assert.Equal(t, farmerData, responseData)
-////}
+//func TestShouldNotAddFarmerOnInvalidInput(t *testing.T) {
+//	db, _, err := sqlmock.New()
+//	if err != nil {
+//		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+//	}
+//	defer db.Close()
 //
-////func TestShouldDeleteParticularFarmerDetails(t *testing.T) {
-////	router := mux.NewRouter()
-////	db, mock, err := sqlmock.New()
-////
-////	router.HandleFunc("/farmers/{id:[0-9]+}", DeleteFarmer(db)).Methods("PATCH")
-////
-////	if err != nil {
-////		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-////	}
-////
-////	defer db.Close()
-////
-////	mock.ExpectBegin()
-////	mock.ExpectExec("^UPDATE farmers SET isDeleted = 1 WHERE farmerId = \\?$").WithArgs(1).WillReturnResult(sqlmock.NewResult(0,1))
-////	mock.ExpectCommit()
-////
-////
-////	req, _ := http.NewRequest("PATCH", "http://localhost/farmers/1", nil)
-////	if err != nil {
-////		t.Fatalf("an error '%s' was not expected while creating request", err)
-////	}
-////	w := httptest.NewRecorder()
-////
-////	router.ServeHTTP(w, req)
-////
-////	if w.Code != 200 {
-////		t.Fatalf("expected status code to be 200, but got: %d", w.Code)
-////	}
-////
-////	if err := mock.ExpectationsWereMet(); err != nil {
-////		t.Errorf("there were unfulfilled expections: %s", err)
-////	}
-////}
+//	farmerJson := []byte(`{"a":123, "b":"something"}`)
+//	farmerService := New(db)
+//	isAdded, er := farmerService.AddFarmer(farmerJson)
+//
+//	assert.Equal(t,false, isAdded)
+//	assert.NotEmpty(t, er)
+//}
+//
+//func TestShouldGetFarmerFromDb(t *testing.T) {
+//	db, mock, err := sqlmock.New()
+//	if err != nil {
+//		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+//	}
+//	defer db.Close()
+//
+//	farmer := util.DummyFarmerOne()
+//	setUpMockForGetFarmer(mock, farmer)
+//
+//	farmerService := New(db)
+//	res, _ := farmerService.GetFarmer(farmer.Id)
+//
+//	assert.Equal(t, farmer, res)
+//}

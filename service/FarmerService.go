@@ -21,9 +21,22 @@ func New(db *sql.DB) FarmerService {
 	return &farmerService{Db: db}
 }
 
-func (service *farmerService) DeleteFarmer(id int) error {
-	fmt.Println(service, id)
-	return fmt.Errorf("somethign went wrong")
+func (service *farmerService) DeleteFarmer(farmerId int) error {
+	transaction, err := service.Db.Begin()
+	if err != nil {
+		return err
+	}
+	defer closeDbTransaction(err, transaction)
+	
+	result, err := transaction.Exec("UPDATE farmers SET isDeleted = 1 WHERE farmerId = ?", farmerId)
+	if err != nil {
+		return err
+	}
+	
+	if val, _ := result.RowsAffected(); val != 1 {
+		return fmt.Errorf("unable to find record")
+	}
+	return nil
 }
 
 func (service *farmerService) ListFarmers() ([]model.Farmer, string) {

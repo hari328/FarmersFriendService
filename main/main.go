@@ -27,12 +27,12 @@ func registerFarmerRoutes(farmerServicer service.FarmerService, rootRouter *mux.
 	listFarmersHandler := handler.ListFarmers(farmerServicer)
 	addFarmersHandler := handler.AddFarmer(farmerServicer)
 	getFarmersHandler := handler.GetFarmer(farmerServicer)
-	//deleteFarmerHandler := handler.DeleteFarmer(db)
+	deleteFarmerHandler := handler.DeleteFarmer(farmerServicer)
 	
 	farmersRouter.HandleFunc("/", listFarmersHandler).Methods("GET")
 	farmersRouter.HandleFunc("/{id:[0-9]+}", getFarmersHandler).Methods("GET")
 	farmersRouter.HandleFunc("/", addFarmersHandler).Methods("POST")
-	//farmersRouter.HandleFunc("/{id:[0-9]+}", deleteFarmerHandler).Methods("PATCH")
+	farmersRouter.HandleFunc("/{id:[0-9]+}", deleteFarmerHandler).Methods("PATCH")
 }
 
 func initDb(dbName string) *sql.DB{
