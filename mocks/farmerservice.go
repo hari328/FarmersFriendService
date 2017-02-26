@@ -22,12 +22,6 @@ func (m *MockFarmerService) ListFarmers()([]model.Farmer, string) {
 }
 
 
-func (m *MockFarmerService) AddFarmer(farmer []byte)(bool, string) {
-	args := m.Called(farmer)
-	return args.Bool(0), args.String(1)
-}
-
-
 func (m *MockFarmerService) GetFarmer(id int)(model.Farmer, string) {
 	stubArgs := m.Called(id)
 	returnError := stubArgs.String(1)
@@ -37,4 +31,15 @@ func (m *MockFarmerService) GetFarmer(id int)(model.Farmer, string) {
 		returnValue = stubArgs.Get(0).(model.Farmer)
 	}
 	return  returnValue, returnError
+}
+
+
+func (m *MockFarmerService) AddFarmer(farmer []byte)(bool, string) {
+	args := m.Called(farmer)
+	return args.Bool(0), args.String(1)
+}
+
+func (m *MockFarmerService) DeleteFarmer(id int) error {
+	stubArgs := m.Called(id)
+	return stubArgs.Error(0)
 }

@@ -10,6 +10,7 @@ type FarmerService interface {
 	ListFarmers() ([]model.Farmer, string)
 	AddFarmer(farmerJson []byte) (bool, string)
 	GetFarmer(id int) (model.Farmer, string)
+	DeleteFarmer(id int) error
 }
 
 type farmerService struct {
@@ -18,6 +19,11 @@ type farmerService struct {
 
 func New(db *sql.DB) FarmerService {
 	return &farmerService{Db: db}
+}
+
+func (service *farmerService) DeleteFarmer(id int) error {
+	fmt.Println(service, id)
+	return fmt.Errorf("somethign went wrong")
 }
 
 func (service *farmerService) ListFarmers() ([]model.Farmer, string) {

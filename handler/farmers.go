@@ -69,31 +69,30 @@ func GetFarmer(service service.FarmerService) http.HandlerFunc {
 	}
 }
 
-//func DeleteFarmer(db *sql.DB) http.HandlerFunc {
-//	return func(res http.ResponseWriter, req *http.Request) {
-//		vars := mux.Vars(req)
-//		id := vars["id"]
-//		farmerId, _ := strconv.Atoi(id)
-//
-//		transaction, err := db.Begin()
-//		defer func() {
-//			switch err {
-//			case nil:
-//				err = transaction.Commit()
-//			default:
-//				transaction.Rollback()
-//			}
-//		}()
-//
-//		if err != nil {
-//			res.WriteHeader(500)
-//		}
-//		result, err := transaction.Exec("UPDATE farmers SET isDeleted = 1 WHERE farmerId = ?", farmerId)
-//
-//		if val, err := result.RowsAffected(); val != 1 || err != nil {
-//			res.WriteHeader(500)
-//		}
-//		res.WriteHeader(200)
+func DeleteFarmer(service service.FarmerService) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		id := vars["id"]
+		farmerId, err := strconv.Atoi(id)
+		if err != nil {
+			res.WriteHeader(500)
+		}
+		err = service.DeleteFarmer(farmerId)
+		
+		if err != nil {
+			fmt.Println("unable to delete farmer",err)
+			res.WriteHeader(500)
+		}
+		res.WriteHeader(200)
+	}
+}
+
+//transaction, err := db.Begin()
+//defer func() {
+//	switch err {
+//	case nil:
+//		err = transaction.Commit()
+//	default:
+//		transaction.Rollback()
 //	}
-//}
-//
+//}()
