@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/FarmersFriendService/service"
+	"github.com/gorilla/mux"
+	"strconv"
 )
 
 func ListFarmers(service service.FarmerService) http.HandlerFunc {
@@ -28,7 +30,6 @@ func ListFarmers(service service.FarmerService) http.HandlerFunc {
 
 func AddFarmer(service service.FarmerService) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		
 		farmerJson, err := ioutil.ReadAll(req.Body)
 		if err != nil {
 			res.WriteHeader(500)
@@ -43,36 +44,31 @@ func AddFarmer(service service.FarmerService) http.HandlerFunc {
 		res.WriteHeader(200)
 	}
 }
-//
-//func GetFarmer(db *sql.DB) http.HandlerFunc {
-//	return func(res http.ResponseWriter, req *http.Request) {
-//		vars := mux.Vars(req)
-//		id := vars["id"]
-//		farmerId, _ := strconv.Atoi(id)
-//
-//		rows, err := db.Query("SELECT * FROM farmers where farmerId = ?", farmerId)
-//
-//		if err != nil {
-//			panic(err)
-//		}
-//		var farmer service.Farmer
-//
-//		for rows.Next() {
-//			err = rows.Scan(&farmer.Id, &farmer.Name, &farmer.District, &farmer.State, &farmer.PhoneNumber, &farmer.IsDeleted)
-//			if err != nil {
-//				panic(err)
-//			}
-//		}
-//
-//		farmerDetails, err := json.Marshal(farmer)
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		res.Write([]byte(farmerDetails))
-//	}
-//}
-//
+
+func GetFarmer(service service.FarmerService) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		id := vars["id"]
+		farmerId, _ := strconv.Atoi(id)
+
+		farmer, er := service.GetFarmer(farmerId)
+		
+		if er != "" {
+			fmt.Println("unable to get farmer for id :",id , er)
+			res.WriteHeader(500)
+		}
+		
+		farmerDetails, err := json.Marshal(farmer)
+		if err != nil {
+			fmt.Println("failed to marshal json", err.Error())
+			res.WriteHeader(500)
+		}
+		
+		res.WriteHeader(200)
+		res.Write([]byte(farmerDetails))
+	}
+}
+
 //func DeleteFarmer(db *sql.DB) http.HandlerFunc {
 //	return func(res http.ResponseWriter, req *http.Request) {
 //		vars := mux.Vars(req)

@@ -12,7 +12,7 @@ import (
 func main() {
 	router := mux.NewRouter()
 	db := initDb("./farmerApp.db")
-	farmerService := service.NewFarmerService(db)
+	farmerService := service.New(db)
 	
 	registerFarmerRoutes(farmerService, router)
 
@@ -26,11 +26,11 @@ func registerFarmerRoutes(farmerServicer service.FarmerService, rootRouter *mux.
 	
 	listFarmersHandler := handler.ListFarmers(farmerServicer)
 	addFarmersHandler := handler.AddFarmer(farmerServicer)
-	//getFarmersHandler := handler.GetFarmer(db)
+	getFarmersHandler := handler.GetFarmer(farmerServicer)
 	//deleteFarmerHandler := handler.DeleteFarmer(db)
 	
 	farmersRouter.HandleFunc("/", listFarmersHandler).Methods("GET")
-	//farmersRouter.HandleFunc("/{id:[0-9]+}", getFarmersHandler).Methods("GET")
+	farmersRouter.HandleFunc("/{id:[0-9]+}", getFarmersHandler).Methods("GET")
 	farmersRouter.HandleFunc("/", addFarmersHandler).Methods("POST")
 	//farmersRouter.HandleFunc("/{id:[0-9]+}", deleteFarmerHandler).Methods("PATCH")
 }

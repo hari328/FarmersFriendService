@@ -18,7 +18,7 @@ func TestShouldFetchFarmersWhenDbHasFarmers(t *testing.T) {
 	defer db.Close()
 	setUpMockForListFarmers(mock, util.GetDummyFarmers())
 	
-	farmerService := NewFarmerService(db)
+	farmerService := New(db)
 	resp, _ := farmerService.ListFarmers()
 	
 	assert.Equal(t, util.GetDummyFarmers(), resp)
@@ -33,7 +33,7 @@ func TestShouldNotFetchFarmersWhenDbHasNoFarmers(t *testing.T) {
 	
 	setUpMockForListFarmers(mock, make([]model.Farmer, 0))
 	
-	farmerService := NewFarmerService(db)
+	farmerService := New(db)
 	resp, _ := farmerService.ListFarmers()
 	
 	var expected []model.Farmer
@@ -47,9 +47,10 @@ func TestShouldNotFetchFarmersWhenDbErrorOut(t *testing.T) {
 	}
 	defer db.Close()
 	
-	mock.ExpectQuery("^SELECT (.+) FROM farmers WHERE isDeleted = 0$").WillReturnError(fmt.Errorf("db error"))
+	mock.ExpectQuery("^SELECT (.+) FROM farmers WHERE isDeleted = 0$").
+		WillReturnError(fmt.Errorf("db error"))
 	
-	farmerService := NewFarmerService(db)
+	farmerService := New(db)
 	_, errString := farmerService.ListFarmers()
 	assert.Equal(t, "unable to retrive Farmers data from db: db error", errString)
 }
@@ -64,7 +65,7 @@ func TestShouldAddFarmerToDb(t *testing.T) {
 	setUpMockForAddFarmer(util.DummyFarmerOne(), mock)
 	
 	farmerJson, _:= json.Marshal(util.DummyFarmerOne())
-	farmerService := NewFarmerService(db)
+	farmerService := New(db)
 	isAdded, er := farmerService.AddFarmer(farmerJson)
 	
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -74,8 +75,80 @@ func TestShouldAddFarmerToDb(t *testing.T) {
 	assert.Equal(t ,"", er)
 }
 
+func TestShouldNotAddFarmerOnInvalidInput(t *testing.T) {
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	
+	farmerJson := []byte(`{"a":123, "b":"something"}`)
+	farmerService := New(db)
+	isAdded, er := farmerService.AddFarmer(farmerJson)
+	
+	assert.Equal(t,false, isAdded)
+	assert.NotEmpty(t, er)
+}
+
+func TestShouldGetFarmerFromDb(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	
+	farmer := util.DummyFarmerOne()
+	setUpMockForGetFarmer(mock, farmer)
+	
+	farmerService := New(db)
+	res, _ := farmerService.GetFarmer(farmer.Id)
+	
+	assert.Equal(t, farmer, res)
+}
+
+func TestShouldGetEmptyFarmerIfValueDoNotExistInDb(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	
+	farmer := util.DummyFarmerOne()
+	setUpMockForGetFarmer(mock, model.Farmer{})
+	
+	farmerService := New(db)
+	res, _ := farmerService.GetFarmer(farmer.Id)
+	
+	assert.Equal(t, model.Farmer{}, res)
+}
+
+func TestShouldGetErrorIfDbErrorOutForGetFarmer(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	
+	farmer := util.DummyFarmerOne()
+	mock.ExpectQuery("^SELECT (.+) FROM farmers where farmerId = \\?$").WithArgs(1).
+		WillReturnError(fmt.Errorf("db error"))
+	
+	farmerService := New(db)
+	_, er := farmerService.GetFarmer(farmer.Id)
+	
+	assert.Equal(t, "unable to retrive Farmers data from db: db error", er)
+}
+
+func setUpMockForGetFarmer(mock sqlmock.Sqlmock, farmer model.Farmer) {
+		rows := sqlmock.NewRows([]string{"id", "name", "district", "state", "phoneNumber", "isDeleted"}).
+			AddRow(farmer.Id, farmer.Name, farmer.District, farmer.State, farmer.PhoneNumber, farmer.IsDeleted)
+		mock.ExpectQuery("^SELECT (.+) FROM farmers where farmerId = \\?$").WithArgs(1).
+			WillReturnRows(rows)
+}
+
 func setUpMockForListFarmers(mock sqlmock.Sqlmock, farmers []model.Farmer) {
-	mock.ExpectQuery("^SELECT (.+) FROM farmers WHERE isDeleted = 0$").WillReturnRows(mockDbResponse(farmers))
+	mock.ExpectQuery("^SELECT (.+) FROM farmers WHERE isDeleted = 0$").
+		WillReturnRows(mockDbResponse(farmers))
 }
 
 func setUpMockForAddFarmer(farmer model.Farmer, mock sqlmock.Sqlmock ) {
