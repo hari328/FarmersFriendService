@@ -34,9 +34,9 @@ func (m *MockFarmerService) GetFarmer(id int)(model.Farmer, string) {
 }
 
 
-func (m *MockFarmerService) AddFarmer(farmer []byte)(bool, string) {
+func (m *MockFarmerService) AddFarmer(farmer []byte) error {
 	args := m.Called(farmer)
-	return args.Bool(0), args.String(1)
+	return args.Error(0)
 }
 
 func (m *MockFarmerService) DeleteFarmer(id int) error {

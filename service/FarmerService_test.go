@@ -66,13 +66,12 @@ func TestShouldAddFarmerToDb(t *testing.T) {
 	
 	farmerJson, _ := json.Marshal(util.DummyFarmerOne())
 	farmerService := New(db)
-	isAdded, er := farmerService.AddFarmer(farmerJson)
+	er := farmerService.AddFarmer(farmerJson)
 	
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expections: %s", err)
 	}
-	assert.Equal(t, true, isAdded)
-	assert.Equal(t, "", er)
+	assert.Nil(t,er)
 }
 
 func TestShouldNotAddFarmerOnInvalidInput(t *testing.T) {
@@ -81,13 +80,11 @@ func TestShouldNotAddFarmerOnInvalidInput(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer db.Close()
-	
+
 	farmerJson := []byte(`{"a":123, "b":"something"}`)
 	farmerService := New(db)
-	isAdded, er := farmerService.AddFarmer(farmerJson)
-	
-	assert.Equal(t, false, isAdded)
-	assert.NotEmpty(t, er)
+	err = farmerService.AddFarmer(farmerJson)
+	assert.NotEmpty(t, err.Error())
 }
 
 func TestShouldGetFarmerFromDb(t *testing.T) {

@@ -34,11 +34,10 @@ func AddFarmer(service service.FarmerService) http.HandlerFunc {
 		if err != nil {
 			res.WriteHeader(500)
 		}
-		
-		added, e := service.AddFarmer(farmerJson)
+		err = service.AddFarmer(farmerJson)
 		//todo: can we send back the response body for 500 ?
-		if !added {
-			fmt.Println("unable to persist farmer: ", string(farmerJson), "error: ", e)
+		if err != nil {
+			fmt.Println("unable to persist farmer: ", string(farmerJson), "error: ", err)
 			res.WriteHeader(500)
 		}
 		res.WriteHeader(200)

@@ -60,7 +60,7 @@ func setupRouterForListFarmer(service *mocks.MockFarmerService) *mux.Router {
 
 func TestShouldAddFarmerOnValidInput(t *testing.T) {
 	farmerService := &mocks.MockFarmerService{}
-	farmerService.On(AddFarmerHandler, []byte("something")).Return(true, "")
+	farmerService.On(AddFarmerHandler, []byte("something")).Return(nil)
 	
 	router := setupRouterForAddFarmer(farmerService)
 	req, _ := http.NewRequest("POST", "http://localhost/farmers/", strings.NewReader("something"))
@@ -72,7 +72,7 @@ func TestShouldAddFarmerOnValidInput(t *testing.T) {
 
 func TestShouldNotAddFarmerOnError(t *testing.T) {
 	farmerService := &mocks.MockFarmerService{}
-	farmerService.On(AddFarmerHandler, []byte("something")).Return( false, "db error")
+	farmerService.On(AddFarmerHandler, []byte("something")).Return( fmt.Errorf("db error"))
 	
 	router := setupRouterForAddFarmer(farmerService)
 	req, _ := http.NewRequest("POST", "http://localhost/farmers/", strings.NewReader("something"))
@@ -84,7 +84,7 @@ func TestShouldNotAddFarmerOnError(t *testing.T) {
 
 func TestShouldNotAddFarmerOnInvalidInput(t *testing.T) {
 	farmerService := &mocks.MockFarmerService{}
-	farmerService.On(AddFarmerHandler, []byte("something")).Return(false, "json couldn't be decoded")
+	farmerService.On(AddFarmerHandler, []byte("something")).Return(fmt.Errorf("json couldn't be decoded"))
 	
 	router := setupRouterForAddFarmer(farmerService)
 	

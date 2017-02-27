@@ -8,7 +8,7 @@ import (
 
 type FarmerService interface {
 	ListFarmers() ([]model.Farmer, string)
-	AddFarmer(farmerJson []byte) (bool, string)
+	AddFarmer(farmerJson []byte) error
 	GetFarmer(id int) (model.Farmer, string)
 	DeleteFarmer(id int) error
 }
@@ -48,14 +48,14 @@ func (service *farmerService) ListFarmers() ([]model.Farmer, string) {
 	return getFarmersFromRows(rows)
 }
 
-func (service *farmerService) AddFarmer(farmerJson []byte) (bool, string) {
+func (service *farmerService) AddFarmer(farmerJson []byte) error {
 	farmer, err := model.Unmarshal(farmerJson)
 	if err != nil {
-		return false, err.Error()
+		return err
 	}
 	transaction, err := service.Db.Begin()
 	if err != nil {
-		return false, err.Error()
+		return err
 	}
 	defer closeDbTransaction(err, transaction)
 	isDeleted := 0
@@ -74,14 +74,14 @@ func (service *farmerService) GetFarmer(id int) (model.Farmer, string) {
 	return res[0], er
 }
 
-func isDbTransactionSuccessful(result sql.Result, err error) (bool, string) {
+func isDbTransactionSuccessful(result sql.Result, err error) error {
 	if err != nil {
-		return false, err.Error()
+		return err
 	}
 	if val, err := result.RowsAffected(); val != 1 || err != nil {
-		return false, err.Error()
+		return err
 	}
-	return true, ""
+	return nil
 }
 
 func getFarmersFromRows(rows *sql.Rows) ([]model.Farmer, string) {
