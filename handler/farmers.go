@@ -17,7 +17,7 @@ func ListFarmers(service service.FarmerService) http.HandlerFunc {
 			res.WriteHeader(500)
 			return
 		}
-
+		
 		farmerDetails, err := json.Marshal(farmers)
 		if err != nil {
 			res.WriteHeader(500)
@@ -33,9 +33,15 @@ func AddFarmer(service service.FarmerService) http.HandlerFunc {
 		farmerJson, err := ioutil.ReadAll(req.Body)
 		if err != nil {
 			res.WriteHeader(500)
+			return
 		}
+		
+		if len(farmerJson) == 0 {
+			res.WriteHeader(500)
+			return
+		}
+		
 		err = service.AddFarmer(farmerJson)
-		//todo: can we send back the response body for 500 ?
 		if err != nil {
 			fmt.Println("unable to persist farmer: ", string(farmerJson), "error: ", err)
 			res.WriteHeader(500)
@@ -46,21 +52,20 @@ func AddFarmer(service service.FarmerService) http.HandlerFunc {
 
 func GetFarmer(service service.FarmerService) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		vars := mux.Vars(req)
-		id := vars["id"]
-		farmerId, _ := strconv.Atoi(id)
-
+		farmerId, err := getFarmerId(req, res)
 		farmer, er := service.GetFarmer(farmerId)
 		
 		if er != "" {
-			fmt.Println("unable to get farmer for id :",id , er)
+			fmt.Println("unable to get farmer for id :",farmerId , er)
 			res.WriteHeader(500)
+			return
 		}
 		
 		farmerDetails, err := json.Marshal(farmer)
 		if err != nil {
 			fmt.Println("failed to marshal json", err.Error())
 			res.WriteHeader(500)
+			return
 		}
 		
 		res.WriteHeader(200)
@@ -70,28 +75,21 @@ func GetFarmer(service service.FarmerService) http.HandlerFunc {
 
 func DeleteFarmer(service service.FarmerService) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		vars := mux.Vars(req)
-		id := vars["id"]
-		farmerId, err := strconv.Atoi(id)
-		if err != nil {
-			res.WriteHeader(500)
-		}
+		farmerId, err := getFarmerId(req, res)
 		err = service.DeleteFarmer(farmerId)
 		
 		if err != nil {
-			fmt.Println("unable to delete farmer",err)
+			fmt.Println("unable to delete farmer", err)
 			res.WriteHeader(500)
+			return
 		}
+		
 		res.WriteHeader(200)
 	}
 }
 
-//transaction, err := db.Begin()
-//defer func() {
-//	switch err {
-//	case nil:
-//		err = transaction.Commit()
-//	default:
-//		transaction.Rollback()
-//	}
-//}()
+func getFarmerId(req *http.Request, res http.ResponseWriter) (int, error) {
+	vars := mux.Vars(req)
+	id := vars["id"]
+	return strconv.Atoi(id)
+}
