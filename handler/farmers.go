@@ -52,7 +52,7 @@ func AddFarmer(service service.FarmerService) http.HandlerFunc {
 
 func GetFarmer(service service.FarmerService) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		farmerId, err := getFarmerId(req, res)
+		farmerId := getFarmerId(req)
 		farmer, er := service.GetFarmer(farmerId)
 		
 		if er != "" {
@@ -75,8 +75,8 @@ func GetFarmer(service service.FarmerService) http.HandlerFunc {
 
 func DeleteFarmer(service service.FarmerService) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		farmerId, err := getFarmerId(req, res)
-		err = service.DeleteFarmer(farmerId)
+		farmerId:= getFarmerId(req)
+		err := service.DeleteFarmer(farmerId)
 		
 		if err != nil {
 			fmt.Println("unable to delete farmer", err)
@@ -88,8 +88,12 @@ func DeleteFarmer(service service.FarmerService) http.HandlerFunc {
 	}
 }
 
-func getFarmerId(req *http.Request, res http.ResponseWriter) (int, error) {
+func getFarmerId(req *http.Request) int {
 	vars := mux.Vars(req)
 	id := vars["id"]
-	return strconv.Atoi(id)
+	farmerId, err := strconv.Atoi(id)
+	if err != nil {
+		fmt.Println("unable to get farmer id from request", err)
+	}
+	return farmerId
 }
