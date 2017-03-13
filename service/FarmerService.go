@@ -7,6 +7,16 @@ import (
 	"github.com/gocraft/dbr"
 )
 
+const (
+	IsDeletedColumn   = "isdeleted"
+	farmerIdColumn    = "farmerId"
+	farmerTable       = "farmers"
+	phoneNumberColumn = "phoneNumber"
+	stateColumn       = "state"
+	districtColumn    = "district"
+	nameColumn        = "name"
+)
+
 type FarmerService interface {
 	ListFarmers() ([]model.Farmer, string)
 	AddFarmer(farmerJson []byte) error
@@ -22,44 +32,26 @@ func New(db *dbr.Connection) FarmerService {
 	return &farmerService{Db: db}
 }
 
-func checkResultOnDbModification(err error ,result sql.Result, methodName string) error{
-	if err != nil {
-		return err
-	}
-	
-	rowsAffected, err := result.RowsAffected()
-	if err != nil || rowsAffected == 0{
-		return fmt.Errorf("failed in method: %s", methodName)
-	}
-	
-	return nil
-}
-
 func (service farmerService) DeleteFarmer(farmerId int) error {
 	fmt.Println("delete routed")
 	session := service.Db.NewSession(nil)
-	result, err := session.Update("farmers").Set("isDeleted", 1).
-													Where(dbr.Eq("farmerId", farmerId)).Exec()
+	result, err := session.Update(farmerTable).Set(IsDeletedColumn, 1).
+		Where(dbr.Eq(farmerIdColumn, farmerId)).Exec()
 	
 	return checkResultOnDbModification(err, result, "DeleteFarmer")
 }
 
-func (service farmerService) getFarmers(farmerId int) ([]model.Farmer, error) {
-	session := service.Db.NewSession(nil)
-	farmers := make([]model.Farmer, 0)
-	
-	if farmerId != 0 {
-		_, err := session.Select("farmerId", "name", "district", "state", "phoneNumber", "isDeleted").
-			From("farmers").Where(dbr.Eq("farmerId", farmerId)).
-			Load(&farmers)
-		fmt.Println(farmers)
-		return farmers, err
+func (service farmerService) AddFarmer(farmerJson []byte) error {
+	farmer, err := model.Unmarshal(farmerJson)
+	if err != nil {
+		return err
 	}
-	_, err := session.Select("farmerId", "name", "district", "state", "phoneNumber", "isDeleted").
-		From("farmers").
-		Load(&farmers)
-	fmt.Println(farmers)
-	return farmers, err
+	
+	session := service.Db.NewSession(nil)
+	result, err := session.InsertInto(farmerTable).
+		Columns(nameColumn, districtColumn, stateColumn, phoneNumberColumn, IsDeletedColumn).Record(farmer).Pair(IsDeletedColumn, 0).Exec()
+	
+	return checkResultOnDbModification(err, result, "AddFarmer")
 }
 
 func (service farmerService) ListFarmers() ([]model.Farmer, string) {
@@ -79,16 +71,32 @@ func (service farmerService) GetFarmer(id int) (model.Farmer, string) {
 	return farmers[0], ""
 }
 
-func (service farmerService) AddFarmer(farmerJson []byte) error {
-	farmer, err := model.Unmarshal(farmerJson)
+func (service farmerService) getFarmers(farmerId int) ([]model.Farmer, error) {
+	session := service.Db.NewSession(nil)
+	farmers := make([]model.Farmer, 0)
+	
+	if farmerId != 0 {
+		_, err := session.Select(farmerIdColumn, nameColumn, districtColumn, stateColumn, phoneNumberColumn, IsDeletedColumn).
+			From(farmerTable).Where(dbr.Eq(farmerIdColumn, farmerId)).
+			Load(&farmers)
+		fmt.Println(farmers)
+		return farmers, err
+	}
+	_, err := session.Select(farmerIdColumn, nameColumn, districtColumn, stateColumn, phoneNumberColumn, IsDeletedColumn).
+		From(farmerTable).
+		Load(&farmers)
+	fmt.Println(farmers)
+	return farmers, err
+}
+
+func checkResultOnDbModification(err error ,result sql.Result, methodName string) error{
 	if err != nil {
 		return err
 	}
-	
-	session := service.Db.NewSession(nil)
-	result, err := session.InsertInto("farmers").
-		Columns("name", "district", "state", "phoneNumber", "isDeleted").Record(farmer).Pair("isDeleted", 0).Exec()
-	 
-	return checkResultOnDbModification(err, result, "AddFarmer")
+	rowsAffected, err := result.RowsAffected()
+	if err != nil || rowsAffected == 0{
+		return fmt.Errorf("failed in method: %s", methodName)
+	}
+	return nil
 }
 
