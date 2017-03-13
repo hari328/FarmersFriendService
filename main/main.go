@@ -4,9 +4,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/gorilla/mux"
 	"net/http"
-	"database/sql"
 	"github.com/FarmersFriendService/service"
 	"github.com/FarmersFriendService/handler"
+	"github.com/gocraft/dbr"
 )
 
 func main() {
@@ -21,13 +21,12 @@ func main() {
 }
 
 func registerFarmerRoutes(farmerServicer service.FarmerService, rootRouter *mux.Router ) {
-	
-	farmersRouter := rootRouter.PathPrefix("/farmers").Subrouter()
-	
 	listFarmersHandler := handler.ListFarmers(farmerServicer)
 	addFarmersHandler := handler.AddFarmer(farmerServicer)
 	getFarmersHandler := handler.GetFarmer(farmerServicer)
 	deleteFarmerHandler := handler.DeleteFarmer(farmerServicer)
+	
+	farmersRouter := rootRouter.PathPrefix("/farmers").Subrouter()
 	
 	farmersRouter.HandleFunc("/", listFarmersHandler).Methods("GET")
 	farmersRouter.HandleFunc("/{id:[0-9]+}", getFarmersHandler).Methods("GET")
@@ -35,8 +34,8 @@ func registerFarmerRoutes(farmerServicer service.FarmerService, rootRouter *mux.
 	farmersRouter.HandleFunc("/{id:[0-9]+}", deleteFarmerHandler).Methods("PATCH")
 }
 
-func initDb(dbName string) *sql.DB{
-	db, err := sql.Open("sqlite3", dbName)
+func initDb(dbName string) *dbr.Connection{
+	db, err := dbr.Open("sqlite3", dbName, nil)
 	if err != nil { panic(err) }
 	if db == nil { panic("db nil") }
 	return db

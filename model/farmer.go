@@ -3,12 +3,12 @@ package model
 import "encoding/json"
 
 type Farmer struct {
-	Id          int                `json:"farmerId"`
-	Name        string             `json:"name"`
-	District    string             `json:"district"`
-	State       string             `json:"state"`
-	PhoneNumber int64              `json:"phoneNumber"`
-	IsDeleted   int                `json:"isDeleted"`
+	Id          int                `db:"farmerId"`
+	Name        string             `db:"name"`
+	District    string             `db:"district"`
+	State       string             `db:"state"`
+	PhoneNumber int64              `db:"phoneNumber"`
+	IsDeleted   int                `db:"isdeleted"`
 }
 
 func Unmarshal(farmerJson []byte) (Farmer, error) {

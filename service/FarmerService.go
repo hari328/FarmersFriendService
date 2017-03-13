@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"database/sql"
 	"github.com/FarmersFriendService/model"
+	"github.com/gocraft/dbr"
 )
 
 type FarmerService interface {
@@ -14,101 +15,80 @@ type FarmerService interface {
 }
 
 type farmerService struct {
-	Db *sql.DB
+	Db *dbr.Connection
 }
 
-func New(db *sql.DB) FarmerService {
+func New(db *dbr.Connection) FarmerService {
 	return &farmerService{Db: db}
 }
 
-func (service *farmerService) DeleteFarmer(farmerId int) error {
-	transaction, err := service.Db.Begin()
-	if err != nil {
-		return err
-	}
-	defer closeDbTransaction(err, transaction)
-	
-	result, err := transaction.Exec("UPDATE farmers SET isDeleted = 1 WHERE farmerId = ?", farmerId)
+func checkResultOnDbModification(err error ,result sql.Result, methodName string) error{
 	if err != nil {
 		return err
 	}
 	
-	if val, _ := result.RowsAffected(); val != 1 {
-		return fmt.Errorf("unable to find record")
+	rowsAffected, err := result.RowsAffected()
+	if err != nil || rowsAffected == 0{
+		return fmt.Errorf("failed in method: %s", methodName)
 	}
+	
 	return nil
 }
 
-func (service *farmerService) ListFarmers() ([]model.Farmer, string) {
-	rows, err := service.Db.Query("SELECT * FROM farmers WHERE isDeleted = 0")
-	defer closeSqlRows(err, rows)
-	if err != nil {
-		return nil, fmt.Sprintf("unable to retrive Farmers data from db: %s", err.Error())
-	}
-	return getFarmersFromRows(rows)
+func (service farmerService) DeleteFarmer(farmerId int) error {
+	fmt.Println("delete routed")
+	session := service.Db.NewSession(nil)
+	result, err := session.Update("farmers").Set("isDeleted", 1).
+													Where(dbr.Eq("farmerId", farmerId)).Exec()
+	
+	return checkResultOnDbModification(err, result, "DeleteFarmer")
 }
 
-func (service *farmerService) AddFarmer(farmerJson []byte) error {
+func (service farmerService) getFarmers(farmerId int) ([]model.Farmer, error) {
+	session := service.Db.NewSession(nil)
+	farmers := make([]model.Farmer, 0)
+	
+	if farmerId != 0 {
+		_, err := session.Select("farmerId", "name", "district", "state", "phoneNumber", "isDeleted").
+			From("farmers").Where(dbr.Eq("farmerId", farmerId)).
+			Load(&farmers)
+		fmt.Println(farmers)
+		return farmers, err
+	}
+	_, err := session.Select("farmerId", "name", "district", "state", "phoneNumber", "isDeleted").
+		From("farmers").
+		Load(&farmers)
+	fmt.Println(farmers)
+	return farmers, err
+}
+
+func (service farmerService) ListFarmers() ([]model.Farmer, string) {
+	farmers, err := service.getFarmers(0)
+	if err != nil {
+		return nil, err.Error()
+	}
+	
+	return farmers, ""
+}
+
+func (service farmerService) GetFarmer(id int) (model.Farmer, string) {
+	farmers, err := service.getFarmers(id)
+	if err != nil {
+		return model.Farmer{}, err.Error()
+	}
+	return farmers[0], ""
+}
+
+func (service farmerService) AddFarmer(farmerJson []byte) error {
 	farmer, err := model.Unmarshal(farmerJson)
 	if err != nil {
 		return err
 	}
-	transaction, err := service.Db.Begin()
-	if err != nil {
-		return err
-	}
-	defer closeDbTransaction(err, transaction)
-	isDeleted := 0
-	result, err := transaction.Exec("INSERT INTO farmers(name, district, state, phoneNumber, isDeleted) VALUES (?, ?, ?, ?, ?)", farmer.Name, farmer.District, farmer.State, farmer.PhoneNumber, isDeleted)
-	return isDbTransactionSuccessful(result, err)
-}
-
-func (service *farmerService) GetFarmer(id int) (model.Farmer, string) {
-	rows, err := service.Db.Query("SELECT * FROM farmers where farmerId = ?", id)
-	if err != nil {
-		return model.Farmer{}, fmt.Sprintf("unable to retrive Farmers data from db: %s", err.Error())
-	}
-	defer closeSqlRows(err, rows)
 	
-	res, er := getFarmersFromRows(rows)
-	return res[0], er
+	session := service.Db.NewSession(nil)
+	result, err := session.InsertInto("farmers").
+		Columns("name", "district", "state", "phoneNumber", "isDeleted").Record(farmer).Pair("isDeleted", 0).Exec()
+	 
+	return checkResultOnDbModification(err, result, "AddFarmer")
 }
 
-func isDbTransactionSuccessful(result sql.Result, err error) error {
-	if err != nil {
-		return err
-	}
-	if val, err := result.RowsAffected(); val != 1 || err != nil {
-		return err
-	}
-	return nil
-}
-
-func getFarmersFromRows(rows *sql.Rows) ([]model.Farmer, string) {
-	var farmers []model.Farmer
-	var farmer model.Farmer
-	
-	for rows.Next() {
-		err := rows.Scan(&farmer.Id, &farmer.Name, &farmer.District, &farmer.State, &farmer.PhoneNumber, &farmer.IsDeleted)
-		if err != nil {
-			return nil, fmt.Sprintf("unable to retrive Farmers data from db: %s", err)
-		}
-		farmers = append(farmers, farmer)
-	}
-	return farmers, ""
-}
-
-func closeSqlRows(err error, rows *sql.Rows) {
-	if err == nil {
-		rows.Close()
-	}
-}
-
-func closeDbTransaction(err error, transaction *sql.Tx) {
-	switch err {
-	case nil:
-		err = transaction.Commit()
-	default:
-		transaction.Rollback()
-	}
-}

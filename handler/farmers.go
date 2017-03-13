@@ -13,6 +13,7 @@ import (
 func ListFarmers(service service.FarmerService) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		farmers, e := service.ListFarmers()
+		fmt.Println(e)
 		if e != "" {
 			res.WriteHeader(500)
 			return
