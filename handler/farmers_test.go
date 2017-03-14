@@ -24,7 +24,7 @@ const (
 )
 
 func TestListFarmersReturnsListOfFarmersWhenNoError(t *testing.T) {
-	farmerService := mockFarmerServiceForListFarmers(util.GetDummyFarmers(), "")
+	farmerService := mockFarmerRepoForListFarmers(util.GetDummyFarmers(), nil)
 	res := makeListFarmersCall(farmerService)
 	result := make([]model.Farmer, 0)
 	_ = json.Unmarshal(res.Body.Bytes(), &result)
@@ -33,12 +33,12 @@ func TestListFarmersReturnsListOfFarmersWhenNoError(t *testing.T) {
 }
 
 func TestListFarmersReturnsErrorOnServiceError(t *testing.T) {
-	farmerService := mockFarmerServiceForListFarmers(nil, "error")
+	farmerService := mockFarmerRepoForListFarmers(nil, fmt.Errorf("error"))
 	res := makeListFarmersCall(farmerService)
 	assert.Equal(t, 500, res.Code)
 }
 
-func mockFarmerServiceForListFarmers(returnValue []model.Farmer, returnError string) *mocks.MockFarmerService {
+func mockFarmerRepoForListFarmers(returnValue []model.Farmer, returnError error) *mocks.MockFarmerService {
 	farmerService := &mocks.MockFarmerService{}
 	farmerService.On(ListFarmersHandler).Return(returnValue, returnError)
 	return farmerService

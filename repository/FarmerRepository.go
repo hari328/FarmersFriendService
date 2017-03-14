@@ -19,7 +19,7 @@ const (
 )
 
 type FarmerRepository interface {
-	ListFarmers() ([]model.Farmer, string)
+	ListFarmers() ([]model.Farmer, error)
 	AddFarmer(farmerJson []byte) error
 	GetFarmer(id int) (model.Farmer, string)
 	DeleteFarmer(id int) error
@@ -55,13 +55,8 @@ func (repo farmerRepository) AddFarmer(farmerJson []byte) error {
 	return checkResultOnDbModification(err, result, "AddFarmer")
 }
 
-func (repo farmerRepository) ListFarmers() ([]model.Farmer, string) {
-	farmers, err := repo.getFarmers(SelectAllFarmersCriteria)
-	if err != nil {
-		return nil, err.Error()
-	}
-	
-	return farmers, ""
+func (repo farmerRepository) ListFarmers() ([]model.Farmer, error) {
+	return repo.getFarmers(SelectAllFarmersCriteria)
 }
 
 func (repo farmerRepository) GetFarmer(id int) (model.Farmer, string) {

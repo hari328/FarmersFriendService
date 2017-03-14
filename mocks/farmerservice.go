@@ -9,13 +9,13 @@ type MockFarmerService struct {
 	mock.Mock
 }
 
-func (m *MockFarmerService) ListFarmers()([]model.Farmer, string) {
+func (m *MockFarmerService) ListFarmers()([]model.Farmer, error) {
 	stubArgs := m.Called()
 	
 	var returnValue []model.Farmer
-	returnError := stubArgs.String(1)
+	returnError := stubArgs.Error(1)
 	
-	if  returnError == "" {
+	if  returnError == nil {
 		returnValue = stubArgs.Get(0).([]model.Farmer)
 	}
 	return  returnValue, returnError

@@ -10,11 +10,11 @@ import (
 	"strconv"
 )
 
-func ListFarmers(service repository.FarmerRepository) http.HandlerFunc {
+func ListFarmers(repo repository.FarmerRepository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		farmers, e := service.ListFarmers()
+		farmers, e := repo.ListFarmers()
 		fmt.Println(e)
-		if e != "" {
+		if e != nil {
 			res.WriteHeader(500)
 			return
 		}
@@ -29,7 +29,7 @@ func ListFarmers(service repository.FarmerRepository) http.HandlerFunc {
 	}
 }
 
-func AddFarmer(service repository.FarmerRepository) http.HandlerFunc {
+func AddFarmer(repo repository.FarmerRepository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		farmerJson, err := ioutil.ReadAll(req.Body)
 		if err != nil {
@@ -42,7 +42,7 @@ func AddFarmer(service repository.FarmerRepository) http.HandlerFunc {
 			return
 		}
 		
-		err = service.AddFarmer(farmerJson)
+		err = repo.AddFarmer(farmerJson)
 		if err != nil {
 			fmt.Println("unable to persist farmer: ", string(farmerJson), "error: ", err)
 			res.WriteHeader(500)
@@ -51,10 +51,10 @@ func AddFarmer(service repository.FarmerRepository) http.HandlerFunc {
 	}
 }
 
-func GetFarmer(service repository.FarmerRepository) http.HandlerFunc {
+func GetFarmer(repo repository.FarmerRepository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		farmerId := getFarmerId(req)
-		farmer, er := service.GetFarmer(farmerId)
+		farmer, er := repo.GetFarmer(farmerId)
 		
 		if er != "" {
 			fmt.Println("unable to get farmer for id :",farmerId , er)
@@ -74,10 +74,10 @@ func GetFarmer(service repository.FarmerRepository) http.HandlerFunc {
 	}
 }
 
-func DeleteFarmer(service repository.FarmerRepository) http.HandlerFunc {
+func DeleteFarmer(repo repository.FarmerRepository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		farmerId:= getFarmerId(req)
-		err := service.DeleteFarmer(farmerId)
+		err := repo.DeleteFarmer(farmerId)
 		
 		if err != nil {
 			fmt.Println("unable to delete farmer", err)
