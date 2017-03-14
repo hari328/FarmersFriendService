@@ -4,15 +4,15 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/gorilla/mux"
 	"net/http"
-	"github.com/FarmersFriendService/service"
 	"github.com/FarmersFriendService/handler"
 	"github.com/gocraft/dbr"
+	"github.com/FarmersFriendService/repository"
 )
 
 func main() {
 	router := mux.NewRouter()
 	db := initDb("./farmerApp.db")
-	farmerService := service.New(db)
+	farmerService := repository.New(db)
 	
 	registerFarmerRoutes(farmerService, router)
 
@@ -20,11 +20,11 @@ func main() {
 	http.ListenAndServe(":9000", nil)
 }
 
-func registerFarmerRoutes(farmerServicer service.FarmerService, rootRouter *mux.Router ) {
-	listFarmersHandler := handler.ListFarmers(farmerServicer)
-	addFarmersHandler := handler.AddFarmer(farmerServicer)
-	getFarmersHandler := handler.GetFarmer(farmerServicer)
-	deleteFarmerHandler := handler.DeleteFarmer(farmerServicer)
+func registerFarmerRoutes(repository repository.FarmerRepository, rootRouter *mux.Router ) {
+	listFarmersHandler := handler.ListFarmers(repository)
+	addFarmersHandler := handler.AddFarmer(repository)
+	getFarmersHandler := handler.GetFarmer(repository)
+	deleteFarmerHandler := handler.DeleteFarmer(repository)
 	
 	farmersRouter := rootRouter.PathPrefix("/farmers").Subrouter()
 	

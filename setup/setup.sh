@@ -45,7 +45,7 @@ else
     echo "glide installed already"
 fi
 
-#remove previous dependencies for this service
+#remove previous dependencies for this repository
 if [ -d ./vendor ]; then
     rm -rf ./vendors
     echo "removed vendor folder."

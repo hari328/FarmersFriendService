@@ -5,12 +5,12 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"fmt"
-	"github.com/FarmersFriendService/service"
+	"github.com/FarmersFriendService/repository"
 	"github.com/gorilla/mux"
 	"strconv"
 )
 
-func ListFarmers(service service.FarmerService) http.HandlerFunc {
+func ListFarmers(service repository.FarmerRepository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		farmers, e := service.ListFarmers()
 		fmt.Println(e)
@@ -29,7 +29,7 @@ func ListFarmers(service service.FarmerService) http.HandlerFunc {
 	}
 }
 
-func AddFarmer(service service.FarmerService) http.HandlerFunc {
+func AddFarmer(service repository.FarmerRepository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		farmerJson, err := ioutil.ReadAll(req.Body)
 		if err != nil {
@@ -51,7 +51,7 @@ func AddFarmer(service service.FarmerService) http.HandlerFunc {
 	}
 }
 
-func GetFarmer(service service.FarmerService) http.HandlerFunc {
+func GetFarmer(service repository.FarmerRepository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		farmerId := getFarmerId(req)
 		farmer, er := service.GetFarmer(farmerId)
@@ -74,7 +74,7 @@ func GetFarmer(service service.FarmerService) http.HandlerFunc {
 	}
 }
 
-func DeleteFarmer(service service.FarmerService) http.HandlerFunc {
+func DeleteFarmer(service repository.FarmerRepository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		farmerId:= getFarmerId(req)
 		err := service.DeleteFarmer(farmerId)

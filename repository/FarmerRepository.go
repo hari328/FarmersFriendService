@@ -1,4 +1,4 @@
-package service
+package repository
 
 import (
 	"fmt"
@@ -18,44 +18,45 @@ const (
 	SelectAllFarmersCriteria = -1
 )
 
-type FarmerService interface {
+type FarmerRepository interface {
 	ListFarmers() ([]model.Farmer, string)
 	AddFarmer(farmerJson []byte) error
 	GetFarmer(id int) (model.Farmer, string)
 	DeleteFarmer(id int) error
 }
 
-type farmerService struct {
+type farmerRepository struct {
 	Db *dbr.Connection
 }
 
-func New(db *dbr.Connection) FarmerService {
-	return &farmerService{Db: db}
+func New(db *dbr.Connection) FarmerRepository {
+	return &farmerRepository{Db: db}
 }
 
-func (service farmerService) DeleteFarmer(farmerId int) error {
-	session := service.Db.NewSession(nil)
+func (repo farmerRepository) DeleteFarmer(farmerId int) error {
+	session := repo.Db.NewSession(nil)
 	result, err := session.Update(farmerTable).Set(IsDeletedColumn, 1).
 		Where(dbr.Eq(farmerIdColumn, farmerId)).Exec()
 	
 	return checkResultOnDbModification(err, result, "DeleteFarmer")
 }
 
-func (service farmerService) AddFarmer(farmerJson []byte) error {
+func (repo farmerRepository) AddFarmer(farmerJson []byte) error {
 	farmer, err := model.Unmarshal(farmerJson)
 	if err != nil {
 		return err
 	}
 	
-	session := service.Db.NewSession(nil)
+	session := repo.Db.NewSession(nil)
 	result, err := session.InsertInto(farmerTable).
-		Columns(nameColumn, districtColumn, stateColumn, phoneNumberColumn, IsDeletedColumn).Record(farmer).Pair(IsDeletedColumn, 0).Exec()
+		Columns(nameColumn, districtColumn, stateColumn, phoneNumberColumn, IsDeletedColumn).
+		Record(farmer).Pair(IsDeletedColumn, 0).Exec()
 	
 	return checkResultOnDbModification(err, result, "AddFarmer")
 }
 
-func (service farmerService) ListFarmers() ([]model.Farmer, string) {
-	farmers, err := service.getFarmers(SelectAllFarmersCriteria)
+func (repo farmerRepository) ListFarmers() ([]model.Farmer, string) {
+	farmers, err := repo.getFarmers(SelectAllFarmersCriteria)
 	if err != nil {
 		return nil, err.Error()
 	}
@@ -63,17 +64,17 @@ func (service farmerService) ListFarmers() ([]model.Farmer, string) {
 	return farmers, ""
 }
 
-func (service farmerService) GetFarmer(id int) (model.Farmer, string) {
-	farmers, err := service.getFarmers(id)
+func (repo farmerRepository) GetFarmer(id int) (model.Farmer, string) {
+	farmers, err := repo.getFarmers(id)
 	if err != nil {
 		return model.Farmer{}, err.Error()
 	}
 	return farmers[0], ""
 }
 
-func (service farmerService) getFarmers(farmerId int) ([]model.Farmer, error) {
+func (repo farmerRepository) getFarmers(farmerId int) ([]model.Farmer, error) {
 	farmers := make([]model.Farmer, 0)
-	session := service.Db.NewSession(nil)
+	session := repo.Db.NewSession(nil)
 	
 	selectAllFarmers := session.Select(farmerIdColumn, nameColumn, districtColumn, stateColumn, phoneNumberColumn, IsDeletedColumn).From(farmerTable)
 	
