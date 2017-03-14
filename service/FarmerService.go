@@ -8,13 +8,14 @@ import (
 )
 
 const (
-	IsDeletedColumn   = "isdeleted"
-	farmerIdColumn    = "farmerId"
-	farmerTable       = "farmers"
-	phoneNumberColumn = "phoneNumber"
-	stateColumn       = "state"
-	districtColumn    = "district"
-	nameColumn        = "name"
+	IsDeletedColumn          = "isdeleted"
+	farmerIdColumn           = "farmerId"
+	farmerTable              = "farmers"
+	phoneNumberColumn        = "phoneNumber"
+	stateColumn              = "state"
+	districtColumn           = "district"
+	nameColumn               = "name"
+	SelectAllFarmersCriteria = -1
 )
 
 type FarmerService interface {
@@ -33,7 +34,6 @@ func New(db *dbr.Connection) FarmerService {
 }
 
 func (service farmerService) DeleteFarmer(farmerId int) error {
-	fmt.Println("delete routed")
 	session := service.Db.NewSession(nil)
 	result, err := session.Update(farmerTable).Set(IsDeletedColumn, 1).
 		Where(dbr.Eq(farmerIdColumn, farmerId)).Exec()
@@ -55,7 +55,7 @@ func (service farmerService) AddFarmer(farmerJson []byte) error {
 }
 
 func (service farmerService) ListFarmers() ([]model.Farmer, string) {
-	farmers, err := service.getFarmers(0)
+	farmers, err := service.getFarmers(SelectAllFarmersCriteria)
 	if err != nil {
 		return nil, err.Error()
 	}
@@ -72,20 +72,16 @@ func (service farmerService) GetFarmer(id int) (model.Farmer, string) {
 }
 
 func (service farmerService) getFarmers(farmerId int) ([]model.Farmer, error) {
-	session := service.Db.NewSession(nil)
 	farmers := make([]model.Farmer, 0)
+	session := service.Db.NewSession(nil)
 	
-	if farmerId != 0 {
-		_, err := session.Select(farmerIdColumn, nameColumn, districtColumn, stateColumn, phoneNumberColumn, IsDeletedColumn).
-			From(farmerTable).Where(dbr.Eq(farmerIdColumn, farmerId)).
-			Load(&farmers)
-		fmt.Println(farmers)
+	selectAllFarmers := session.Select(farmerIdColumn, nameColumn, districtColumn, stateColumn, phoneNumberColumn, IsDeletedColumn).From(farmerTable)
+	
+	if farmerId != -1 {
+		_, err := selectAllFarmers.Where(dbr.Eq(farmerIdColumn, farmerId)).Load(&farmers)
 		return farmers, err
 	}
-	_, err := session.Select(farmerIdColumn, nameColumn, districtColumn, stateColumn, phoneNumberColumn, IsDeletedColumn).
-		From(farmerTable).
-		Load(&farmers)
-	fmt.Println(farmers)
+	_, err := selectAllFarmers.Load(&farmers)
 	return farmers, err
 }
 
