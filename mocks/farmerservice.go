@@ -22,12 +22,12 @@ func (m *MockFarmerService) ListFarmers()([]model.Farmer, error) {
 }
 
 
-func (m *MockFarmerService) GetFarmer(id int)(model.Farmer, string) {
+func (m *MockFarmerService) GetFarmer(id int)(model.Farmer, error) {
 	stubArgs := m.Called(id)
-	returnError := stubArgs.String(1)
+	returnError := stubArgs.Error(1)
 	
 	var returnValue model.Farmer
-	if  returnError == "" {
+	if  returnError == nil {
 		returnValue = stubArgs.Get(0).(model.Farmer)
 	}
 	return  returnValue, returnError

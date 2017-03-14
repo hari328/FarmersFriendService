@@ -100,7 +100,7 @@ func setupRouterForAddFarmer(service *mocks.MockFarmerService) *mux.Router {
 }
 
 func TestGetFarmerReturnsFarmerOnValidInput(t *testing.T) {
-	farmerService := mockFarmerServiceForGetFarmer(1, util.DummyFarmerOne(), "")
+	farmerService := mockFarmerServiceForGetFarmer(1, util.DummyFarmerOne(), nil)
 	res := makeGetFarmerCall(farmerService, "1")
 	
 	result := model.Farmer{}
@@ -111,7 +111,7 @@ func TestGetFarmerReturnsFarmerOnValidInput(t *testing.T) {
 }
 
 func TestGetFarmerReturnsErrorOnServiceError(t *testing.T) {
-	farmerService := mockFarmerServiceForGetFarmer(1, model.Farmer{}, "error")
+	farmerService := mockFarmerServiceForGetFarmer(1, model.Farmer{}, fmt.Errorf("error"))
 	res := makeGetFarmerCall(farmerService, "1")
 
 	result := model.Farmer{}
@@ -120,7 +120,7 @@ func TestGetFarmerReturnsErrorOnServiceError(t *testing.T) {
 	assert.Equal(t, 500, res.Code)
 }
 
-func mockFarmerServiceForGetFarmer(id int, resultValue model.Farmer, err string) *mocks.MockFarmerService {
+func mockFarmerServiceForGetFarmer(id int, resultValue model.Farmer, err error) *mocks.MockFarmerService {
 	farmerService := &mocks.MockFarmerService{}
 	farmerService.On(GerFarmerHandler, id).Return(resultValue, err)
 	return farmerService

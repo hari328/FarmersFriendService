@@ -21,7 +21,7 @@ const (
 type FarmerRepository interface {
 	ListFarmers() ([]model.Farmer, error)
 	AddFarmer(farmerJson []byte) error
-	GetFarmer(id int) (model.Farmer, string)
+	GetFarmer(id int) (model.Farmer, error)
 	DeleteFarmer(id int) error
 }
 
@@ -59,12 +59,9 @@ func (repo farmerRepository) ListFarmers() ([]model.Farmer, error) {
 	return repo.getFarmers(SelectAllFarmersCriteria)
 }
 
-func (repo farmerRepository) GetFarmer(id int) (model.Farmer, string) {
+func (repo farmerRepository) GetFarmer(id int) (model.Farmer, error) {
 	farmers, err := repo.getFarmers(id)
-	if err != nil {
-		return model.Farmer{}, err.Error()
-	}
-	return farmers[0], ""
+	return farmers[0], err
 }
 
 func (repo farmerRepository) getFarmers(farmerId int) ([]model.Farmer, error) {

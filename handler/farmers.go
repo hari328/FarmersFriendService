@@ -54,10 +54,10 @@ func AddFarmer(repo repository.FarmerRepository) http.HandlerFunc {
 func GetFarmer(repo repository.FarmerRepository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		farmerId := getFarmerId(req)
-		farmer, er := repo.GetFarmer(farmerId)
+		farmer, err := repo.GetFarmer(farmerId)
 		
-		if er != "" {
-			fmt.Println("unable to get farmer for id :",farmerId , er)
+		if err != nil {
+			fmt.Println("unable to get farmer for id :",farmerId , err.Error())
 			res.WriteHeader(500)
 			return
 		}
