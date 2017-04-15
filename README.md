@@ -3,8 +3,8 @@
 ###Basic Dependencies
 
 * install go
-* add installed go path to global $PATH variable
-* set $GOPATH (your go working directory)
+* add installed go path to $PATH 
+* set your go working directory as $GOPATH
 * clone this repo at $GOPATH/src/github.com/
 
 ### Service Dependencies
@@ -18,5 +18,5 @@ run the migrations from cloned folder
 $ goose -env=production -pgschema=farmerApp.db status
 $ goose -env=production -pgschema=farmerApp.db up
 $ goose -env=production -pgschema=farmerApp.db down
-$ goose -env=production -pgschema=farmerApp.db create <migration name> -sql
+$ goose -env=production -pgschema=farmerApp.db create <migration name> sql
 ```
